@@ -1,6 +1,7 @@
-package pp
+package pp_test
 
 import (
+	"manlu.org/pp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -14,45 +15,45 @@ type (
 )
 
 func (dws *dialectWrapperSuite) SetupSuite() {
-	testDialect := DefaultDialectOptions()
+	testDialect := pp.DefaultDialectOptions()
 	// override to some value to ensure correct dialect is set
-	RegisterDialect("test", testDialect)
+	pp.RegisterDialect("test", testDialect)
 }
 
 func (dws *dialectWrapperSuite) TearDownSuite() {
-	DeregisterDialect("test")
+	pp.DeregisterDialect("test")
 }
 
 func (dws *dialectWrapperSuite) TestFrom() {
-	dw := Dialect("test")
-	dws.Equal(From("table").WithDialect("test"), dw.From("table"))
+	dw := pp.Dialect("test")
+	dws.Equal(pp.From("table").WithDialect("test"), dw.From("table"))
 }
 
 func (dws *dialectWrapperSuite) TestSelect() {
-	dw := Dialect("test")
-	dws.Equal(Select("col").WithDialect("test"), dw.Select("col"))
+	dw := pp.Dialect("test")
+	dws.Equal(pp.Select("col").WithDialect("test"), dw.Select("col"))
 }
 
 func (dws *dialectWrapperSuite) TestInsert() {
-	dw := Dialect("test")
-	dws.Equal(Insert("table").WithDialect("test"), dw.Insert("table"))
+	dw := pp.Dialect("test")
+	dws.Equal(pp.Insert("table").WithDialect("test"), dw.Insert("table"))
 }
 
 func (dws *dialectWrapperSuite) TestDelete() {
-	dw := Dialect("test")
-	dws.Equal(Delete("table").WithDialect("test"), dw.Delete("table"))
+	dw := pp.Dialect("test")
+	dws.Equal(pp.Delete("table").WithDialect("test"), dw.Delete("table"))
 }
 
 func (dws *dialectWrapperSuite) TestTruncate() {
-	dw := Dialect("test")
-	dws.Equal(Truncate("table").WithDialect("test"), dw.Truncate("table"))
+	dw := pp.Dialect("test")
+	dws.Equal(pp.Truncate("table").WithDialect("test"), dw.Truncate("table"))
 }
 
 func (dws *dialectWrapperSuite) TestDB() {
 	mDB, _, err := sqlmock.New()
 	dws.Require().NoError(err)
-	dw := Dialect("test")
-	dws.Equal(New("test", mDB), dw.DB(mDB))
+	dw := pp.Dialect("test")
+	dws.Equal(pp.New("test", mDB), dw.DB(mDB))
 }
 
 func TestDialectWrapper(t *testing.T) {

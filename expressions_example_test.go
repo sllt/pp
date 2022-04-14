@@ -3,9 +3,9 @@ package pp_test
 
 import (
 	"fmt"
+	"manlu.org/pp"
 	"regexp"
 
-	"manlu.org/pp"
 	"manlu.org/pp/exp"
 )
 

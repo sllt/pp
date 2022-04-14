@@ -1,14 +1,16 @@
 // nolint:lll // sql statements are long
-package pp
+package pp_test
 
 import (
 	goSQL "database/sql"
 	"fmt"
-	"github.com/lib/pq"
-	"manlu.org/pp/exp"
+	"manlu.org/pp"
 	"os"
 	"regexp"
 	"time"
+
+	"github.com/lib/pq"
+	"manlu.org/pp/exp"
 )
 
 const schema = `
@@ -30,9 +32,9 @@ const schema = `
 
 const defaultDBURI = "postgres://postgres:@localhost:5435/pppostgres?sslmode=disable"
 
-var ppDB *Database
+var ppDB *pp.Database
 
-func getDB() *Database {
+func getDB() *pp.Database {
 	if ppDB == nil {
 		dbURI := os.Getenv("PG_URI")
 		if dbURI == "" {
@@ -46,7 +48,7 @@ func getDB() *Database {
 		if err != nil {
 			panic(err)
 		}
-		ppDB = New("postgres", pdb)
+		ppDB = pp.New("postgres", pdb)
 	}
 	// reset the db
 	if _, err := ppDB.Exec(schema); err != nil {
@@ -91,26 +93,26 @@ func getDB() *Database {
 }
 
 func ExampleSelectDataset() {
-	ds := From("test").
-		Select(COUNT("*")).
-		InnerJoin(T("test2"), On(I("test.fkey").Eq(I("test2.id")))).
-		LeftJoin(T("test3"), On(I("test2.fkey").Eq(I("test3.id")))).
+	ds := pp.From("test").
+		Select(pp.COUNT("*")).
+		InnerJoin(pp.T("test2"), pp.On(pp.I("test.fkey").Eq(pp.I("test2.id")))).
+		LeftJoin(pp.T("test3"), pp.On(pp.I("test2.fkey").Eq(pp.I("test3.id")))).
 		Where(
-			Ex{
-				"test.name": Op{
+			pp.Ex{
+				"test.name": pp.Op{
 					"like": regexp.MustCompile("^[ab]"),
 				},
-				"test2.amount": Op{
+				"test2.amount": pp.Op{
 					"isNot": nil,
 				},
 			},
-			ExOr{
+			pp.ExOr{
 				"test3.id":     nil,
 				"test3.status": []string{"passed", "active", "registered"},
 			}).
-		Order(I("test.created").Desc().NullsLast()).
-		GroupBy(I("test.user_id")).
-		Having(AVG("test3.age").Gt(10))
+		Order(pp.I("test.created").Desc().NullsLast()).
+		GroupBy(pp.I("test.user_id")).
+		Having(pp.AVG("test3.age").Gt(10))
 
 	sql, args, _ := ds.Build()
 	fmt.Println(sql, args)
@@ -124,7 +126,7 @@ func ExampleSelectDataset() {
 }
 
 func ExampleSelect() {
-	sql, _, _ := Select(L("NOW()")).Build()
+	sql, _, _ := pp.Select(pp.L("NOW()")).Build()
 	fmt.Println(sql)
 
 	// Output:
@@ -132,7 +134,7 @@ func ExampleSelect() {
 }
 
 func ExampleFrom() {
-	sql, args, _ := From("test").Build()
+	sql, args, _ := pp.From("test").Build()
 	fmt.Println(sql, args)
 
 	// Output:
@@ -140,28 +142,28 @@ func ExampleFrom() {
 }
 
 func ExampleSelectDataset_As() {
-	ds := From("test").As("t")
-	sql, _, _ := From(ds).Build()
+	ds := pp.From("test").As("t")
+	sql, _, _ := pp.From(ds).Build()
 	fmt.Println(sql)
 	// Output: SELECT * FROM (SELECT * FROM "test") AS "t"
 }
 
 func ExampleSelectDataset_Union() {
-	sql, _, _ := From("test").
-		Union(From("test2")).
+	sql, _, _ := pp.From("test").
+		Union(pp.From("test2")).
 		Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").
+	sql, _, _ = pp.From("test").
 		Limit(1).
-		Union(From("test2")).
+		Union(pp.From("test2")).
 		Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").
+	sql, _, _ = pp.From("test").
 		Limit(1).
-		Union(From("test2").
-			Order(C("id").Desc())).
+		Union(pp.From("test2").
+			Order(pp.C("id").Desc())).
 		Build()
 	fmt.Println(sql)
 	// Output:
@@ -171,19 +173,19 @@ func ExampleSelectDataset_Union() {
 }
 
 func ExampleSelectDataset_UnionAll() {
-	sql, _, _ := From("test").
-		UnionAll(From("test2")).
+	sql, _, _ := pp.From("test").
+		UnionAll(pp.From("test2")).
 		Build()
 	fmt.Println(sql)
-	sql, _, _ = From("test").
+	sql, _, _ = pp.From("test").
 		Limit(1).
-		UnionAll(From("test2")).
+		UnionAll(pp.From("test2")).
 		Build()
 	fmt.Println(sql)
-	sql, _, _ = From("test").
+	sql, _, _ = pp.From("test").
 		Limit(1).
-		UnionAll(From("test2").
-			Order(C("id").Desc())).
+		UnionAll(pp.From("test2").
+			Order(pp.C("id").Desc())).
 		Build()
 	fmt.Println(sql)
 	// Output:
@@ -193,20 +195,20 @@ func ExampleSelectDataset_UnionAll() {
 }
 
 func ExampleSelectDataset_With() {
-	sql, _, _ := From("one").
-		With("one", From().Select(L("1"))).
-		Select(Star()).
+	sql, _, _ := pp.From("one").
+		With("one", pp.From().Select(pp.L("1"))).
+		Select(pp.Star()).
 		Build()
 	fmt.Println(sql)
-	sql, _, _ = From("derived").
-		With("intermed", From("test").Select(Star()).Where(C("x").Gte(5))).
-		With("derived", From("intermed").Select(Star()).Where(C("x").Lt(10))).
-		Select(Star()).
+	sql, _, _ = pp.From("derived").
+		With("intermed", pp.From("test").Select(pp.Star()).Where(pp.C("x").Gte(5))).
+		With("derived", pp.From("intermed").Select(pp.Star()).Where(pp.C("x").Lt(10))).
+		Select(pp.Star()).
 		Build()
 	fmt.Println(sql)
-	sql, _, _ = From("multi").
-		With("multi(x,y)", From().Select(L("1"), L("2"))).
-		Select(C("x"), C("y")).
+	sql, _, _ = pp.From("multi").
+		With("multi(x,y)", pp.From().Select(pp.L("1"), pp.L("2"))).
+		Select(pp.C("x"), pp.C("y")).
 		Build()
 	fmt.Println(sql)
 
@@ -217,12 +219,12 @@ func ExampleSelectDataset_With() {
 }
 
 func ExampleSelectDataset_With_insertDataset() {
-	insertDs := Insert("foo").Rows(Record{"user_id": 10}).Returning("id")
+	insertDs := pp.Insert("foo").Rows(pp.Record{"user_id": 10}).Returning("id")
 
-	ds := From("bar").
+	ds := pp.From("bar").
 		With("ins", insertDs).
 		Select("bar_name").
-		Where(Ex{"bar.user_id": I("ins.user_id")})
+		Where(pp.Ex{"bar.user_id": pp.I("ins.user_id")})
 
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
@@ -236,12 +238,12 @@ func ExampleSelectDataset_With_insertDataset() {
 }
 
 func ExampleSelectDataset_With_updateDataset() {
-	updateDs := Update("foo").Set(Record{"bar": "baz"}).Returning("id")
+	updateDs := pp.Update("foo").Set(pp.Record{"bar": "baz"}).Returning("id")
 
-	ds := From("bar").
+	ds := pp.From("bar").
 		With("upd", updateDs).
 		Select("bar_name").
-		Where(Ex{"bar.user_id": I("upd.user_id")})
+		Where(pp.Ex{"bar.user_id": pp.I("upd.user_id")})
 
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
@@ -255,12 +257,12 @@ func ExampleSelectDataset_With_updateDataset() {
 }
 
 func ExampleSelectDataset_With_deleteDataset() {
-	deleteDs := Delete("foo").Where(Ex{"bar": "baz"}).Returning("id")
+	deleteDs := pp.Delete("foo").Where(pp.Ex{"bar": "baz"}).Returning("id")
 
-	ds := From("bar").
+	ds := pp.From("bar").
 		With("del", deleteDs).
 		Select("bar_name").
-		Where(Ex{"bar.user_id": I("del.user_id")})
+		Where(pp.Ex{"bar.user_id": pp.I("del.user_id")})
 
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
@@ -273,11 +275,11 @@ func ExampleSelectDataset_With_deleteDataset() {
 }
 
 func ExampleSelectDataset_WithRecursive() {
-	sql, _, _ := From("nums").
+	sql, _, _ := pp.From("nums").
 		WithRecursive("nums(x)",
-			From().Select(L("1")).
-				UnionAll(From("nums").
-					Select(L("x+1")).Where(C("x").Lt(5)))).
+			pp.From().Select(pp.L("1")).
+				UnionAll(pp.From("nums").
+					Select(pp.L("x+1")).Where(pp.C("x").Lt(5)))).
 		Build()
 	fmt.Println(sql)
 	// Output:
@@ -285,19 +287,19 @@ func ExampleSelectDataset_WithRecursive() {
 }
 
 func ExampleSelectDataset_Intersect() {
-	sql, _, _ := From("test").
-		Intersect(From("test2")).
+	sql, _, _ := pp.From("test").
+		Intersect(pp.From("test2")).
 		Build()
 	fmt.Println(sql)
-	sql, _, _ = From("test").
+	sql, _, _ = pp.From("test").
 		Limit(1).
-		Intersect(From("test2")).
+		Intersect(pp.From("test2")).
 		Build()
 	fmt.Println(sql)
-	sql, _, _ = From("test").
+	sql, _, _ = pp.From("test").
 		Limit(1).
-		Intersect(From("test2").
-			Order(C("id").Desc())).
+		Intersect(pp.From("test2").
+			Order(pp.C("id").Desc())).
 		Build()
 	fmt.Println(sql)
 	// Output:
@@ -307,19 +309,19 @@ func ExampleSelectDataset_Intersect() {
 }
 
 func ExampleSelectDataset_IntersectAll() {
-	sql, _, _ := From("test").
-		IntersectAll(From("test2")).
+	sql, _, _ := pp.From("test").
+		IntersectAll(pp.From("test2")).
 		Build()
 	fmt.Println(sql)
-	sql, _, _ = From("test").
+	sql, _, _ = pp.From("test").
 		Limit(1).
-		IntersectAll(From("test2")).
+		IntersectAll(pp.From("test2")).
 		Build()
 	fmt.Println(sql)
-	sql, _, _ = From("test").
+	sql, _, _ = pp.From("test").
 		Limit(1).
-		IntersectAll(From("test2").
-			Order(C("id").Desc())).
+		IntersectAll(pp.From("test2").
+			Order(pp.C("id").Desc())).
 		Build()
 	fmt.Println(sql)
 	// Output:
@@ -329,7 +331,7 @@ func ExampleSelectDataset_IntersectAll() {
 }
 
 func ExampleSelectDataset_ClearOffset() {
-	ds := From("test").
+	ds := pp.From("test").
 		Offset(2)
 	sql, _, _ := ds.
 		ClearOffset().
@@ -340,7 +342,7 @@ func ExampleSelectDataset_ClearOffset() {
 }
 
 func ExampleSelectDataset_Offset() {
-	ds := From("test").Offset(2)
+	ds := pp.From("test").Offset(2)
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
 	// Output:
@@ -348,7 +350,7 @@ func ExampleSelectDataset_Offset() {
 }
 
 func ExampleSelectDataset_Limit() {
-	ds := From("test").Limit(10)
+	ds := pp.From("test").Limit(10)
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
 	// Output:
@@ -356,7 +358,7 @@ func ExampleSelectDataset_Limit() {
 }
 
 func ExampleSelectDataset_LimitAll() {
-	ds := From("test").LimitAll()
+	ds := pp.From("test").LimitAll()
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
 	// Output:
@@ -364,7 +366,7 @@ func ExampleSelectDataset_LimitAll() {
 }
 
 func ExampleSelectDataset_ClearLimit() {
-	ds := From("test").Limit(10)
+	ds := pp.From("test").Limit(10)
 	sql, _, _ := ds.ClearLimit().Build()
 	fmt.Println(sql)
 	// Output:
@@ -372,7 +374,7 @@ func ExampleSelectDataset_ClearLimit() {
 }
 
 func ExampleSelectDataset_Order() {
-	ds := From("test").Order(C("a").Asc())
+	ds := pp.From("test").Order(pp.C("a").Asc())
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
 	// Output:
@@ -380,7 +382,7 @@ func ExampleSelectDataset_Order() {
 }
 
 func ExampleSelectDataset_Order_caseExpression() {
-	ds := From("test").Order(Case().When(C("num").Gt(10), 0).Else(1).Asc())
+	ds := pp.From("test").Order(pp.Case().When(pp.C("num").Gt(10), 0).Else(1).Asc())
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
 	// Output:
@@ -388,23 +390,23 @@ func ExampleSelectDataset_Order_caseExpression() {
 }
 
 func ExampleSelectDataset_OrderAppend() {
-	ds := From("test").Order(C("a").Asc())
-	sql, _, _ := ds.OrderAppend(C("b").Desc().NullsLast()).Build()
+	ds := pp.From("test").Order(pp.C("a").Asc())
+	sql, _, _ := ds.OrderAppend(pp.C("b").Desc().NullsLast()).Build()
 	fmt.Println(sql)
 	// Output:
 	// SELECT * FROM "test" ORDER BY "a" ASC, "b" DESC NULLS LAST
 }
 
 func ExampleSelectDataset_OrderPrepend() {
-	ds := From("test").Order(C("a").Asc())
-	sql, _, _ := ds.OrderPrepend(C("b").Desc().NullsLast()).Build()
+	ds := pp.From("test").Order(pp.C("a").Asc())
+	sql, _, _ := ds.OrderPrepend(pp.C("b").Desc().NullsLast()).Build()
 	fmt.Println(sql)
 	// Output:
 	// SELECT * FROM "test" ORDER BY "b" DESC NULLS LAST, "a" ASC
 }
 
 func ExampleSelectDataset_ClearOrder() {
-	ds := From("test").Order(C("a").Asc())
+	ds := pp.From("test").Order(pp.C("a").Asc())
 	sql, _, _ := ds.ClearOrder().Build()
 	fmt.Println(sql)
 	// Output:
@@ -412,8 +414,8 @@ func ExampleSelectDataset_ClearOrder() {
 }
 
 func ExampleSelectDataset_GroupBy() {
-	sql, _, _ := From("test").
-		Select(SUM("income").As("income_sum")).
+	sql, _, _ := pp.From("test").
+		Select(pp.SUM("income").As("income_sum")).
 		GroupBy("age").
 		Build()
 	fmt.Println(sql)
@@ -422,8 +424,8 @@ func ExampleSelectDataset_GroupBy() {
 }
 
 func ExampleSelectDataset_GroupByAppend() {
-	ds := From("test").
-		Select(SUM("income").As("income_sum")).
+	ds := pp.From("test").
+		Select(pp.SUM("income").As("income_sum")).
 		GroupBy("age")
 	sql, _, _ := ds.
 		GroupByAppend("job").
@@ -438,9 +440,9 @@ func ExampleSelectDataset_GroupByAppend() {
 }
 
 func ExampleSelectDataset_Having() {
-	sql, _, _ := From("test").Having(SUM("income").Gt(1000)).Build()
+	sql, _, _ := pp.From("test").Having(pp.SUM("income").Gt(1000)).Build()
 	fmt.Println(sql)
-	sql, _, _ = From("test").GroupBy("age").Having(SUM("income").Gt(1000)).Build()
+	sql, _, _ = pp.From("test").GroupBy("age").Having(pp.SUM("income").Gt(1000)).Build()
 	fmt.Println(sql)
 	// Output:
 	// SELECT * FROM "test" HAVING (SUM("income") > 1000)
@@ -448,29 +450,29 @@ func ExampleSelectDataset_Having() {
 }
 
 func ExampleSelectDataset_Window() {
-	ds := From("test").
-		Select(ROW_NUMBER().Over(W().PartitionBy("a").OrderBy(I("b").Asc())))
+	ds := pp.From("test").
+		Select(pp.ROW_NUMBER().Over(pp.W().PartitionBy("a").OrderBy(pp.I("b").Asc())))
 	query, args, _ := ds.Build()
 	fmt.Println(query, args)
 
-	ds = From("test").
-		Select(ROW_NUMBER().OverName(I("w"))).
-		Window(W("w").PartitionBy("a").OrderBy(I("b").Asc()))
+	ds = pp.From("test").
+		Select(pp.ROW_NUMBER().OverName(pp.I("w"))).
+		Window(pp.W("w").PartitionBy("a").OrderBy(pp.I("b").Asc()))
 	query, args, _ = ds.Build()
 	fmt.Println(query, args)
 
-	ds = From("test").
-		Select(ROW_NUMBER().OverName(I("w1"))).
+	ds = pp.From("test").
+		Select(pp.ROW_NUMBER().OverName(pp.I("w1"))).
 		Window(
-			W("w1").PartitionBy("a"),
-			W("w").Inherit("w1").OrderBy(I("b").Asc()),
+			pp.W("w1").PartitionBy("a"),
+			pp.W("w").Inherit("w1").OrderBy(pp.I("b").Asc()),
 		)
 	query, args, _ = ds.Build()
 	fmt.Println(query, args)
 
-	ds = From("test").
-		Select(ROW_NUMBER().Over(W().Inherit("w").OrderBy("b"))).
-		Window(W("w").PartitionBy("a"))
+	ds = pp.From("test").
+		Select(pp.ROW_NUMBER().Over(pp.W().Inherit("w").OrderBy("b"))).
+		Window(pp.W("w").PartitionBy("a"))
 	query, args, _ = ds.Build()
 	fmt.Println(query, args)
 	// Output
@@ -482,29 +484,29 @@ func ExampleSelectDataset_Window() {
 
 func ExampleSelectDataset_Where() {
 	// By default everything is anded together
-	sql, _, _ := From("test").Where(Ex{
-		"a": Op{"gt": 10},
-		"b": Op{"lt": 10},
+	sql, _, _ := pp.From("test").Where(pp.Ex{
+		"a": pp.Op{"gt": 10},
+		"b": pp.Op{"lt": 10},
 		"c": nil,
 		"d": []string{"a", "b", "c"},
 	}).Build()
 	fmt.Println(sql)
 	// You can use ExOr to get ORed expressions together
-	sql, _, _ = From("test").Where(ExOr{
-		"a": Op{"gt": 10},
-		"b": Op{"lt": 10},
+	sql, _, _ = pp.From("test").Where(pp.ExOr{
+		"a": pp.Op{"gt": 10},
+		"b": pp.Op{"lt": 10},
 		"c": nil,
 		"d": []string{"a", "b", "c"},
 	}).Build()
 	fmt.Println(sql)
 	// You can use Or with Ex to Or multiple Ex maps together
-	sql, _, _ = From("test").Where(
-		Or(
-			Ex{
-				"a": Op{"gt": 10},
-				"b": Op{"lt": 10},
+	sql, _, _ = pp.From("test").Where(
+		pp.Or(
+			pp.Ex{
+				"a": pp.Op{"gt": 10},
+				"b": pp.Op{"lt": 10},
 			},
-			Ex{
+			pp.Ex{
 				"c": nil,
 				"d": []string{"a", "b", "c"},
 			},
@@ -512,20 +514,20 @@ func ExampleSelectDataset_Where() {
 	).Build()
 	fmt.Println(sql)
 	// By default everything is anded together
-	sql, _, _ = From("test").Where(
-		C("a").Gt(10),
-		C("b").Lt(10),
-		C("c").IsNull(),
-		C("d").In("a", "b", "c"),
+	sql, _, _ = pp.From("test").Where(
+		pp.C("a").Gt(10),
+		pp.C("b").Lt(10),
+		pp.C("c").IsNull(),
+		pp.C("d").In("a", "b", "c"),
 	).Build()
 	fmt.Println(sql)
 	// You can use a combination of Ors and Ands
-	sql, _, _ = From("test").Where(
-		Or(
-			C("a").Gt(10),
-			And(
-				C("b").Lt(10),
-				C("c").IsNull(),
+	sql, _, _ = pp.From("test").Where(
+		pp.Or(
+			pp.C("a").Gt(10),
+			pp.And(
+				pp.C("b").Lt(10),
+				pp.C("c").IsNull(),
 			),
 		),
 	).Build()
@@ -540,29 +542,29 @@ func ExampleSelectDataset_Where() {
 
 func ExampleSelectDataset_Where_prepared() {
 	// By default everything is anded together
-	sql, args, _ := From("test").Prepared(true).Where(Ex{
-		"a": Op{"gt": 10},
-		"b": Op{"lt": 10},
+	sql, args, _ := pp.From("test").Prepared(true).Where(pp.Ex{
+		"a": pp.Op{"gt": 10},
+		"b": pp.Op{"lt": 10},
 		"c": nil,
 		"d": []string{"a", "b", "c"},
 	}).Build()
 	fmt.Println(sql, args)
 	// You can use ExOr to get ORed expressions together
-	sql, args, _ = From("test").Prepared(true).Where(ExOr{
-		"a": Op{"gt": 10},
-		"b": Op{"lt": 10},
+	sql, args, _ = pp.From("test").Prepared(true).Where(pp.ExOr{
+		"a": pp.Op{"gt": 10},
+		"b": pp.Op{"lt": 10},
 		"c": nil,
 		"d": []string{"a", "b", "c"},
 	}).Build()
 	fmt.Println(sql, args)
 	// You can use Or with Ex to Or multiple Ex maps together
-	sql, args, _ = From("test").Prepared(true).Where(
-		Or(
-			Ex{
-				"a": Op{"gt": 10},
-				"b": Op{"lt": 10},
+	sql, args, _ = pp.From("test").Prepared(true).Where(
+		pp.Or(
+			pp.Ex{
+				"a": pp.Op{"gt": 10},
+				"b": pp.Op{"lt": 10},
 			},
-			Ex{
+			pp.Ex{
 				"c": nil,
 				"d": []string{"a", "b", "c"},
 			},
@@ -570,20 +572,20 @@ func ExampleSelectDataset_Where_prepared() {
 	).Build()
 	fmt.Println(sql, args)
 	// By default everything is anded together
-	sql, args, _ = From("test").Prepared(true).Where(
-		C("a").Gt(10),
-		C("b").Lt(10),
-		C("c").IsNull(),
-		C("d").In("a", "b", "c"),
+	sql, args, _ = pp.From("test").Prepared(true).Where(
+		pp.C("a").Gt(10),
+		pp.C("b").Lt(10),
+		pp.C("c").IsNull(),
+		pp.C("d").In("a", "b", "c"),
 	).Build()
 	fmt.Println(sql, args)
 	// You can use a combination of Ors and Ands
-	sql, args, _ = From("test").Prepared(true).Where(
-		Or(
-			C("a").Gt(10),
-			And(
-				C("b").Lt(10),
-				C("c").IsNull(),
+	sql, args, _ = pp.From("test").Prepared(true).Where(
+		pp.Or(
+			pp.C("a").Gt(10),
+			pp.And(
+				pp.C("b").Lt(10),
+				pp.C("c").IsNull(),
 			),
 		),
 	).Build()
@@ -597,12 +599,12 @@ func ExampleSelectDataset_Where_prepared() {
 }
 
 func ExampleSelectDataset_ClearWhere() {
-	ds := From("test").Where(
-		Or(
-			C("a").Gt(10),
-			And(
-				C("b").Lt(10),
-				C("c").IsNull(),
+	ds := pp.From("test").Where(
+		pp.Or(
+			pp.C("a").Gt(10),
+			pp.And(
+				pp.C("b").Lt(10),
+				pp.C("c").IsNull(),
 			),
 		),
 	)
@@ -613,24 +615,24 @@ func ExampleSelectDataset_ClearWhere() {
 }
 
 func ExampleSelectDataset_Join() {
-	sql, _, _ := From("test").Join(
-		T("test2"),
-		On(Ex{"test.fkey": I("test2.Id")}),
+	sql, _, _ := pp.From("test").Join(
+		pp.T("test2"),
+		pp.On(pp.Ex{"test.fkey": pp.I("test2.Id")}),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").Join(T("test2"), Using("common_column")).Build()
+	sql, _, _ = pp.From("test").Join(pp.T("test2"), pp.Using("common_column")).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").Join(
-		From("test2").Where(C("amount").Gt(0)),
-		On(I("test.fkey").Eq(T("test2").Col("Id"))),
+	sql, _, _ = pp.From("test").Join(
+		pp.From("test2").Where(pp.C("amount").Gt(0)),
+		pp.On(pp.I("test.fkey").Eq(pp.T("test2").Col("Id"))),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").Join(
-		From("test2").Where(C("amount").Gt(0)).As("t"),
-		On(T("test").Col("fkey").Eq(T("t").Col("Id"))),
+	sql, _, _ = pp.From("test").Join(
+		pp.From("test2").Where(pp.C("amount").Gt(0)).As("t"),
+		pp.On(pp.T("test").Col("fkey").Eq(pp.T("t").Col("Id"))),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -641,29 +643,29 @@ func ExampleSelectDataset_Join() {
 }
 
 func ExampleSelectDataset_InnerJoin() {
-	sql, _, _ := From("test").InnerJoin(
-		T("test2"),
-		On(Ex{
-			"test.fkey": I("test2.Id"),
+	sql, _, _ := pp.From("test").InnerJoin(
+		pp.T("test2"),
+		pp.On(pp.Ex{
+			"test.fkey": pp.I("test2.Id"),
 		}),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").InnerJoin(
-		T("test2"),
-		Using("common_column"),
+	sql, _, _ = pp.From("test").InnerJoin(
+		pp.T("test2"),
+		pp.Using("common_column"),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").InnerJoin(
-		From("test2").Where(C("amount").Gt(0)),
-		On(I("test.fkey").Eq(I("test2.Id"))),
+	sql, _, _ = pp.From("test").InnerJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)),
+		pp.On(pp.I("test.fkey").Eq(pp.I("test2.Id"))),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").InnerJoin(
-		From("test2").Where(C("amount").Gt(0)).As("t"),
-		On(I("test.fkey").Eq(I("t.Id"))),
+	sql, _, _ = pp.From("test").InnerJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)).As("t"),
+		pp.On(pp.I("test.fkey").Eq(pp.I("t.Id"))),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -674,29 +676,29 @@ func ExampleSelectDataset_InnerJoin() {
 }
 
 func ExampleSelectDataset_FullOuterJoin() {
-	sql, _, _ := From("test").FullOuterJoin(
-		T("test2"),
-		On(Ex{
-			"test.fkey": I("test2.Id"),
+	sql, _, _ := pp.From("test").FullOuterJoin(
+		pp.T("test2"),
+		pp.On(pp.Ex{
+			"test.fkey": pp.I("test2.Id"),
 		}),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").FullOuterJoin(
-		T("test2"),
-		Using("common_column"),
+	sql, _, _ = pp.From("test").FullOuterJoin(
+		pp.T("test2"),
+		pp.Using("common_column"),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").FullOuterJoin(
-		From("test2").Where(C("amount").Gt(0)),
-		On(I("test.fkey").Eq(I("test2.Id"))),
+	sql, _, _ = pp.From("test").FullOuterJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)),
+		pp.On(pp.I("test.fkey").Eq(pp.I("test2.Id"))),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").FullOuterJoin(
-		From("test2").Where(C("amount").Gt(0)).As("t"),
-		On(I("test.fkey").Eq(I("t.Id"))),
+	sql, _, _ = pp.From("test").FullOuterJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)).As("t"),
+		pp.On(pp.I("test.fkey").Eq(pp.I("t.Id"))),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -707,29 +709,29 @@ func ExampleSelectDataset_FullOuterJoin() {
 }
 
 func ExampleSelectDataset_RightOuterJoin() {
-	sql, _, _ := From("test").RightOuterJoin(
-		T("test2"),
-		On(Ex{
-			"test.fkey": I("test2.Id"),
+	sql, _, _ := pp.From("test").RightOuterJoin(
+		pp.T("test2"),
+		pp.On(pp.Ex{
+			"test.fkey": pp.I("test2.Id"),
 		}),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").RightOuterJoin(
-		T("test2"),
-		Using("common_column"),
+	sql, _, _ = pp.From("test").RightOuterJoin(
+		pp.T("test2"),
+		pp.Using("common_column"),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").RightOuterJoin(
-		From("test2").Where(C("amount").Gt(0)),
-		On(I("test.fkey").Eq(I("test2.Id"))),
+	sql, _, _ = pp.From("test").RightOuterJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)),
+		pp.On(pp.I("test.fkey").Eq(pp.I("test2.Id"))),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").RightOuterJoin(
-		From("test2").Where(C("amount").Gt(0)).As("t"),
-		On(I("test.fkey").Eq(I("t.Id"))),
+	sql, _, _ = pp.From("test").RightOuterJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)).As("t"),
+		pp.On(pp.I("test.fkey").Eq(pp.I("t.Id"))),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -740,29 +742,29 @@ func ExampleSelectDataset_RightOuterJoin() {
 }
 
 func ExampleSelectDataset_LeftOuterJoin() {
-	sql, _, _ := From("test").LeftOuterJoin(
-		T("test2"),
-		On(Ex{
-			"test.fkey": I("test2.Id"),
+	sql, _, _ := pp.From("test").LeftOuterJoin(
+		pp.T("test2"),
+		pp.On(pp.Ex{
+			"test.fkey": pp.I("test2.Id"),
 		}),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").LeftOuterJoin(
-		T("test2"),
-		Using("common_column"),
+	sql, _, _ = pp.From("test").LeftOuterJoin(
+		pp.T("test2"),
+		pp.Using("common_column"),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").LeftOuterJoin(
-		From("test2").Where(C("amount").Gt(0)),
-		On(I("test.fkey").Eq(I("test2.Id"))),
+	sql, _, _ = pp.From("test").LeftOuterJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)),
+		pp.On(pp.I("test.fkey").Eq(pp.I("test2.Id"))),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").LeftOuterJoin(
-		From("test2").Where(C("amount").Gt(0)).As("t"),
-		On(I("test.fkey").Eq(I("t.Id"))),
+	sql, _, _ = pp.From("test").LeftOuterJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)).As("t"),
+		pp.On(pp.I("test.fkey").Eq(pp.I("t.Id"))),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -773,29 +775,29 @@ func ExampleSelectDataset_LeftOuterJoin() {
 }
 
 func ExampleSelectDataset_FullJoin() {
-	sql, _, _ := From("test").FullJoin(
-		T("test2"),
-		On(Ex{
-			"test.fkey": I("test2.Id"),
+	sql, _, _ := pp.From("test").FullJoin(
+		pp.T("test2"),
+		pp.On(pp.Ex{
+			"test.fkey": pp.I("test2.Id"),
 		}),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").FullJoin(
-		T("test2"),
-		Using("common_column"),
+	sql, _, _ = pp.From("test").FullJoin(
+		pp.T("test2"),
+		pp.Using("common_column"),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").FullJoin(
-		From("test2").Where(C("amount").Gt(0)),
-		On(I("test.fkey").Eq(I("test2.Id"))),
+	sql, _, _ = pp.From("test").FullJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)),
+		pp.On(pp.I("test.fkey").Eq(pp.I("test2.Id"))),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").FullJoin(
-		From("test2").Where(C("amount").Gt(0)).As("t"),
-		On(I("test.fkey").Eq(I("t.Id"))),
+	sql, _, _ = pp.From("test").FullJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)).As("t"),
+		pp.On(pp.I("test.fkey").Eq(pp.I("t.Id"))),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -806,29 +808,29 @@ func ExampleSelectDataset_FullJoin() {
 }
 
 func ExampleSelectDataset_RightJoin() {
-	sql, _, _ := From("test").RightJoin(
-		T("test2"),
-		On(Ex{
-			"test.fkey": I("test2.Id"),
+	sql, _, _ := pp.From("test").RightJoin(
+		pp.T("test2"),
+		pp.On(pp.Ex{
+			"test.fkey": pp.I("test2.Id"),
 		}),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").RightJoin(
-		T("test2"),
-		Using("common_column"),
+	sql, _, _ = pp.From("test").RightJoin(
+		pp.T("test2"),
+		pp.Using("common_column"),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").RightJoin(
-		From("test2").Where(C("amount").Gt(0)),
-		On(I("test.fkey").Eq(I("test2.Id"))),
+	sql, _, _ = pp.From("test").RightJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)),
+		pp.On(pp.I("test.fkey").Eq(pp.I("test2.Id"))),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").RightJoin(
-		From("test2").Where(C("amount").Gt(0)).As("t"),
-		On(I("test.fkey").Eq(I("t.Id"))),
+	sql, _, _ = pp.From("test").RightJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)).As("t"),
+		pp.On(pp.I("test.fkey").Eq(pp.I("t.Id"))),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -839,29 +841,29 @@ func ExampleSelectDataset_RightJoin() {
 }
 
 func ExampleSelectDataset_LeftJoin() {
-	sql, _, _ := From("test").LeftJoin(
-		T("test2"),
-		On(Ex{
-			"test.fkey": I("test2.Id"),
+	sql, _, _ := pp.From("test").LeftJoin(
+		pp.T("test2"),
+		pp.On(pp.Ex{
+			"test.fkey": pp.I("test2.Id"),
 		}),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").LeftJoin(
-		T("test2"),
-		Using("common_column"),
+	sql, _, _ = pp.From("test").LeftJoin(
+		pp.T("test2"),
+		pp.Using("common_column"),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").LeftJoin(
-		From("test2").Where(C("amount").Gt(0)),
-		On(I("test.fkey").Eq(I("test2.Id"))),
+	sql, _, _ = pp.From("test").LeftJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)),
+		pp.On(pp.I("test.fkey").Eq(pp.I("test2.Id"))),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").LeftJoin(
-		From("test2").Where(C("amount").Gt(0)).As("t"),
-		On(I("test.fkey").Eq(I("t.Id"))),
+	sql, _, _ = pp.From("test").LeftJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)).As("t"),
+		pp.On(pp.I("test.fkey").Eq(pp.I("t.Id"))),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -872,16 +874,16 @@ func ExampleSelectDataset_LeftJoin() {
 }
 
 func ExampleSelectDataset_NaturalJoin() {
-	sql, _, _ := From("test").NaturalJoin(T("test2")).Build()
+	sql, _, _ := pp.From("test").NaturalJoin(pp.T("test2")).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").NaturalJoin(
-		From("test2").Where(C("amount").Gt(0)),
+	sql, _, _ = pp.From("test").NaturalJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").NaturalJoin(
-		From("test2").Where(C("amount").Gt(0)).As("t"),
+	sql, _, _ = pp.From("test").NaturalJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)).As("t"),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -891,16 +893,16 @@ func ExampleSelectDataset_NaturalJoin() {
 }
 
 func ExampleSelectDataset_NaturalLeftJoin() {
-	sql, _, _ := From("test").NaturalLeftJoin(T("test2")).Build()
+	sql, _, _ := pp.From("test").NaturalLeftJoin(pp.T("test2")).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").NaturalLeftJoin(
-		From("test2").Where(C("amount").Gt(0)),
+	sql, _, _ = pp.From("test").NaturalLeftJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").NaturalLeftJoin(
-		From("test2").Where(C("amount").Gt(0)).As("t"),
+	sql, _, _ = pp.From("test").NaturalLeftJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)).As("t"),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -910,16 +912,16 @@ func ExampleSelectDataset_NaturalLeftJoin() {
 }
 
 func ExampleSelectDataset_NaturalRightJoin() {
-	sql, _, _ := From("test").NaturalRightJoin(T("test2")).Build()
+	sql, _, _ := pp.From("test").NaturalRightJoin(pp.T("test2")).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").NaturalRightJoin(
-		From("test2").Where(C("amount").Gt(0)),
+	sql, _, _ = pp.From("test").NaturalRightJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").NaturalRightJoin(
-		From("test2").Where(C("amount").Gt(0)).As("t"),
+	sql, _, _ = pp.From("test").NaturalRightJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)).As("t"),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -929,16 +931,16 @@ func ExampleSelectDataset_NaturalRightJoin() {
 }
 
 func ExampleSelectDataset_NaturalFullJoin() {
-	sql, _, _ := From("test").NaturalFullJoin(T("test2")).Build()
+	sql, _, _ := pp.From("test").NaturalFullJoin(pp.T("test2")).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").NaturalFullJoin(
-		From("test2").Where(C("amount").Gt(0)),
+	sql, _, _ = pp.From("test").NaturalFullJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").NaturalFullJoin(
-		From("test2").Where(C("amount").Gt(0)).As("t"),
+	sql, _, _ = pp.From("test").NaturalFullJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)).As("t"),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -948,16 +950,16 @@ func ExampleSelectDataset_NaturalFullJoin() {
 }
 
 func ExampleSelectDataset_CrossJoin() {
-	sql, _, _ := From("test").CrossJoin(T("test2")).Build()
+	sql, _, _ := pp.From("test").CrossJoin(pp.T("test2")).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").CrossJoin(
-		From("test2").Where(C("amount").Gt(0)),
+	sql, _, _ = pp.From("test").CrossJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)),
 	).Build()
 	fmt.Println(sql)
 
-	sql, _, _ = From("test").CrossJoin(
-		From("test2").Where(C("amount").Gt(0)).As("t"),
+	sql, _, _ = pp.From("test").CrossJoin(
+		pp.From("test2").Where(pp.C("amount").Gt(0)).As("t"),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -967,9 +969,9 @@ func ExampleSelectDataset_CrossJoin() {
 }
 
 func ExampleSelectDataset_FromSelf() {
-	sql, _, _ := From("test").FromSelf().Build()
+	sql, _, _ := pp.From("test").FromSelf().Build()
 	fmt.Println(sql)
-	sql, _, _ = From("test").As("my_test_table").FromSelf().Build()
+	sql, _, _ = pp.From("test").As("my_test_table").FromSelf().Build()
 	fmt.Println(sql)
 	// Output:
 	// SELECT * FROM (SELECT * FROM "test") AS "t1"
@@ -977,7 +979,7 @@ func ExampleSelectDataset_FromSelf() {
 }
 
 func ExampleSelectDataset_From() {
-	ds := From("test")
+	ds := pp.From("test")
 	sql, _, _ := ds.From("test2").Build()
 	fmt.Println(sql)
 	// Output:
@@ -985,8 +987,8 @@ func ExampleSelectDataset_From() {
 }
 
 func ExampleSelectDataset_From_withDataset() {
-	ds := From("test")
-	fromDs := ds.Where(C("age").Gt(10))
+	ds := pp.From("test")
+	fromDs := ds.Where(pp.C("age").Gt(10))
 	sql, _, _ := ds.From(fromDs).Build()
 	fmt.Println(sql)
 	// Output:
@@ -994,8 +996,8 @@ func ExampleSelectDataset_From_withDataset() {
 }
 
 func ExampleSelectDataset_From_withAliasedDataset() {
-	ds := From("test")
-	fromDs := ds.Where(C("age").Gt(10))
+	ds := pp.From("test")
+	fromDs := ds.Where(pp.C("age").Gt(10))
 	sql, _, _ := ds.From(fromDs.As("test2")).Build()
 	fmt.Println(sql)
 	// Output:
@@ -1003,15 +1005,15 @@ func ExampleSelectDataset_From_withAliasedDataset() {
 }
 
 func ExampleSelectDataset_Select() {
-	sql, _, _ := From("test").Select("a", "b", "c").Build()
+	sql, _, _ := pp.From("test").Select("a", "b", "c").Build()
 	fmt.Println(sql)
 	// Output:
 	// SELECT "a", "b", "c" FROM "test"
 }
 
 func ExampleSelectDataset_Select_withDataset() {
-	ds := From("test")
-	fromDs := ds.Select("age").Where(C("age").Gt(10))
+	ds := pp.From("test")
+	fromDs := ds.Select("age").Where(pp.C("age").Gt(10))
 	sql, _, _ := ds.From().Select(fromDs).Build()
 	fmt.Println(sql)
 	// Output:
@@ -1019,8 +1021,8 @@ func ExampleSelectDataset_Select_withDataset() {
 }
 
 func ExampleSelectDataset_Select_withAliasedDataset() {
-	ds := From("test")
-	fromDs := ds.Select("age").Where(C("age").Gt(10))
+	ds := pp.From("test")
+	fromDs := ds.Select("age").Where(pp.C("age").Gt(10))
 	sql, _, _ := ds.From().Select(fromDs.As("ages")).Build()
 	fmt.Println(sql)
 	// Output:
@@ -1028,17 +1030,17 @@ func ExampleSelectDataset_Select_withAliasedDataset() {
 }
 
 func ExampleSelectDataset_Select_withLiteral() {
-	sql, _, _ := From("test").Select(L("a + b").As("sum")).Build()
+	sql, _, _ := pp.From("test").Select(pp.L("a + b").As("sum")).Build()
 	fmt.Println(sql)
 	// Output:
 	// SELECT a + b AS "sum" FROM "test"
 }
 
 func ExampleSelectDataset_Select_withSQLFunctionExpression() {
-	sql, _, _ := From("test").Select(
-		COUNT("*").As("age_count"),
-		MAX("age").As("max_age"),
-		AVG("age").As("avg_age"),
+	sql, _, _ := pp.From("test").Select(
+		pp.COUNT("*").As("age_count"),
+		pp.MAX("age").As("max_age"),
+		pp.AVG("age").As("avg_age"),
 	).Build()
 	fmt.Println(sql)
 	// Output:
@@ -1046,7 +1048,7 @@ func ExampleSelectDataset_Select_withSQLFunctionExpression() {
 }
 
 func ExampleSelectDataset_Select_withStruct() {
-	ds := From("test")
+	ds := pp.From("test")
 
 	type myStruct struct {
 		Name         string
@@ -1090,38 +1092,38 @@ func ExampleSelectDataset_Select_withStruct() {
 }
 
 func ExampleSelectDataset_Distinct() {
-	sql, _, _ := From("test").Select("a", "b").Distinct().Build()
+	sql, _, _ := pp.From("test").Select("a", "b").Distinct().Build()
 	fmt.Println(sql)
 	// Output:
 	// SELECT DISTINCT "a", "b" FROM "test"
 }
 
 func ExampleSelectDataset_Distinct_on() {
-	sql, _, _ := From("test").Distinct("a").Build()
+	sql, _, _ := pp.From("test").Distinct("a").Build()
 	fmt.Println(sql)
 	// Output:
 	// SELECT DISTINCT ON ("a") * FROM "test"
 }
 
 func ExampleSelectDataset_Distinct_onWithLiteral() {
-	sql, _, _ := From("test").Distinct(L("COALESCE(?, ?)", C("a"), "empty")).Build()
+	sql, _, _ := pp.From("test").Distinct(pp.L("COALESCE(?, ?)", pp.C("a"), "empty")).Build()
 	fmt.Println(sql)
 	// Output:
 	// SELECT DISTINCT ON (COALESCE("a", 'empty')) * FROM "test"
 }
 
 func ExampleSelectDataset_Distinct_onCoalesce() {
-	sql, _, _ := From("test").Distinct(COALESCE(C("a"), "empty")).Build()
+	sql, _, _ := pp.From("test").Distinct(pp.COALESCE(pp.C("a"), "empty")).Build()
 	fmt.Println(sql)
 	// Output:
 	// SELECT DISTINCT ON (COALESCE("a", 'empty')) * FROM "test"
 }
 
 func ExampleSelectDataset_SelectAppend() {
-	ds := From("test").Select("a", "b")
+	ds := pp.From("test").Select("a", "b")
 	sql, _, _ := ds.SelectAppend("c").Build()
 	fmt.Println(sql)
-	ds = From("test").Select("a", "b").Distinct()
+	ds = pp.From("test").Select("a", "b").Distinct()
 	sql, _, _ = ds.SelectAppend("c").Build()
 	fmt.Println(sql)
 	// Output:
@@ -1130,10 +1132,10 @@ func ExampleSelectDataset_SelectAppend() {
 }
 
 func ExampleSelectDataset_ClearSelect() {
-	ds := From("test").Select("a", "b")
+	ds := pp.From("test").Select("a", "b")
 	sql, _, _ := ds.ClearSelect().Build()
 	fmt.Println(sql)
-	ds = From("test").Select("a", "b").Distinct()
+	ds = pp.From("test").Select("a", "b").Distinct()
 	sql, _, _ = ds.ClearSelect().Build()
 	fmt.Println(sql)
 	// Output:
@@ -1142,14 +1144,14 @@ func ExampleSelectDataset_ClearSelect() {
 }
 
 func ExampleSelectDataset_Build() {
-	sql, args, _ := From("items").Where(Ex{"a": 1}).Build()
+	sql, args, _ := pp.From("items").Where(pp.Ex{"a": 1}).Build()
 	fmt.Println(sql, args)
 	// Output:
 	// SELECT * FROM "items" WHERE ("a" = 1) []
 }
 
 func ExampleSelectDataset_Build_prepared() {
-	sql, args, _ := From("items").Where(Ex{"a": 1}).Prepared(true).Build()
+	sql, args, _ := pp.From("items").Where(pp.Ex{"a": 1}).Prepared(true).Build()
 	fmt.Println(sql, args)
 	// Output:
 	// SELECT * FROM "items" WHERE ("a" = ?) [1]
@@ -1160,17 +1162,17 @@ func ExampleSelectDataset_Update() {
 		Address string `db:"address"`
 		Name    string `db:"name"`
 	}
-	sql, args, _ := From("items").Update().Set(
+	sql, args, _ := pp.From("items").Update().Set(
 		item{Name: "Test", Address: "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = From("items").Update().Set(
-		Record{"name": "Test", "address": "111 Test Addr"},
+	sql, args, _ = pp.From("items").Update().Set(
+		pp.Record{"name": "Test", "address": "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = From("items").Update().Set(
+	sql, args, _ = pp.From("items").Update().Set(
 		map[string]interface{}{"name": "Test", "address": "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
@@ -1187,27 +1189,27 @@ func ExampleSelectDataset_Insert() {
 		Address string `db:"address"`
 		Name    string `db:"name"`
 	}
-	sql, args, _ := From("items").Insert().Rows(
+	sql, args, _ := pp.From("items").Insert().Rows(
 		item{Name: "Test1", Address: "111 Test Addr"},
 		item{Name: "Test2", Address: "112 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = From("items").Insert().Rows(
-		Record{"name": "Test1", "address": "111 Test Addr"},
-		Record{"name": "Test2", "address": "112 Test Addr"},
+	sql, args, _ = pp.From("items").Insert().Rows(
+		pp.Record{"name": "Test1", "address": "111 Test Addr"},
+		pp.Record{"name": "Test2", "address": "112 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = From("items").Insert().Rows(
+	sql, args, _ = pp.From("items").Insert().Rows(
 		[]item{
 			{Name: "Test1", Address: "111 Test Addr"},
 			{Name: "Test2", Address: "112 Test Addr"},
 		}).Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = From("items").Insert().Rows(
-		[]Record{
+	sql, args, _ = pp.From("items").Insert().Rows(
+		[]pp.Record{
 			{"name": "Test1", "address": "111 Test Addr"},
 			{"name": "Test2", "address": "112 Test Addr"},
 		}).Build()
@@ -1220,11 +1222,11 @@ func ExampleSelectDataset_Insert() {
 }
 
 func ExampleSelectDataset_Delete() {
-	sql, args, _ := From("items").Delete().Build()
+	sql, args, _ := pp.From("items").Delete().Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = From("items").
-		Where(Ex{"id": Op{"gt": 10}}).
+	sql, args, _ = pp.From("items").
+		Where(pp.Ex{"id": pp.Op{"gt": 10}}).
 		Delete().
 		Build()
 	fmt.Println(sql, args)
@@ -1235,14 +1237,14 @@ func ExampleSelectDataset_Delete() {
 }
 
 func ExampleSelectDataset_Truncate() {
-	sql, args, _ := From("items").Truncate().Build()
+	sql, args, _ := pp.From("items").Truncate().Build()
 	fmt.Println(sql, args)
 	// Output:
 	// TRUNCATE "items" []
 }
 
 func ExampleSelectDataset_Prepared() {
-	sql, args, _ := From("items").Prepared(true).Where(Ex{
+	sql, args, _ := pp.From("items").Prepared(true).Where(pp.Ex{
 		"col1": "a",
 		"col2": 1,
 		"col3": true,
@@ -1289,7 +1291,7 @@ func ExampleSelectDataset_ScanStructs_prepared() {
 
 	ds := db.From("pp_user").
 		Prepared(true).
-		Where(Ex{
+		Where(pp.Ex{
 			"last_name": "Yukon",
 		})
 
@@ -1324,7 +1326,7 @@ func ExampleSelectDataset_ScanStructs_withJoinAutoSelect() {
 
 	ds := db.
 		From("pp_user").
-		Join(T("user_role"), On(I("pp_user.id").Eq(I("user_role.user_id"))))
+		Join(pp.T("user_role"), pp.On(pp.I("pp_user.id").Eq(pp.I("user_role.user_id"))))
 	var users []UserAndRole
 	// Scan structs will auto build the
 	if err := ds.ScanStructs(&users); err != nil {
@@ -1362,11 +1364,11 @@ func ExampleSelectDataset_ScanStructs_withJoinManualSelect() {
 			"pp_user.first_name",
 			"pp_user.last_name",
 			// alias the fully qualified identifier `C` is important here so it doesnt parse it
-			I("user_role.user_id").As(C("user_role.user_id")),
-			I("user_role.name").As(C("user_role.name")),
+			pp.I("user_role.user_id").As(pp.C("user_role.user_id")),
+			pp.I("user_role.name").As(pp.C("user_role.name")),
 		).
 		From("pp_user").
-		Join(T("user_role"), On(I("pp_user.id").Eq(I("user_role.user_id"))))
+		Join(pp.T("user_role"), pp.On(pp.I("pp_user.id").Eq(pp.I("user_role.user_id"))))
 	var users []User
 	if err := ds.ScanStructs(&users); err != nil {
 		fmt.Println(err.Error())
@@ -1391,7 +1393,7 @@ func ExampleSelectDataset_ScanStruct() {
 	db := getDB()
 	findUserByName := func(name string) {
 		var user User
-		ds := db.From("pp_user").Where(C("first_name").Eq(name))
+		ds := db.From("pp_user").Where(pp.C("first_name").Eq(name))
 		found, err := ds.ScanStruct(&user)
 		switch {
 		case err != nil:
@@ -1433,10 +1435,10 @@ func ExampleSelectDataset_ScanStruct_withJoinAutoSelect() {
 		ds := db.
 			From("pp_user").
 			Join(
-				T("user_role"),
-				On(I("pp_user.id").Eq(I("user_role.user_id"))),
+				pp.T("user_role"),
+				pp.On(pp.I("pp_user.id").Eq(pp.I("user_role.user_id"))),
 			).
-			Where(C("first_name").Eq(name))
+			Where(pp.C("first_name").Eq(name))
 		found, err := ds.ScanStruct(&userAndRole)
 		switch {
 		case err != nil:
@@ -1477,15 +1479,15 @@ func ExampleSelectDataset_ScanStruct_withJoinManualSelect() {
 				"pp_user.first_name",
 				"pp_user.last_name",
 				// alias the fully qualified identifier `C` is important here so it doesnt parse it
-				I("user_role.user_id").As(C("user_role.user_id")),
-				I("user_role.name").As(C("user_role.name")),
+				pp.I("user_role.user_id").As(pp.C("user_role.user_id")),
+				pp.I("user_role.name").As(pp.C("user_role.name")),
 			).
 			From("pp_user").
 			Join(
-				T("user_role"),
-				On(I("pp_user.id").Eq(I("user_role.user_id"))),
+				pp.T("user_role"),
+				pp.On(pp.I("pp_user.id").Eq(pp.I("user_role.user_id"))),
 			).
-			Where(C("first_name").Eq(name))
+			Where(pp.C("first_name").Eq(name))
 		found, err := ds.ScanStruct(&userAndRole)
 		switch {
 		case err != nil:
@@ -1523,7 +1525,7 @@ func ExampleSelectDataset_ScanVal() {
 		var id int64
 		ds := db.From("pp_user").
 			Select("id").
-			Where(C("first_name").Eq(name))
+			Where(pp.C("first_name").Eq(name))
 
 		found, err := ds.ScanVal(&id)
 		switch {
@@ -1577,7 +1579,7 @@ func ExampleSelectDataset_Executor_scannerScanStruct() {
 	scanner, err := db.
 		From("pp_user").
 		Select("first_name", "last_name").
-		Where(Ex{
+		Where(pp.Ex{
 			"last_name": "Yukon",
 		}).
 		Executor().
@@ -1617,7 +1619,7 @@ func ExampleSelectDataset_Executor_scannerScanVal() {
 	scanner, err := db.
 		From("pp_user").
 		Select("first_name").
-		Where(Ex{
+		Where(pp.Ex{
 			"last_name": "Yukon",
 		}).
 		Executor().
@@ -1652,7 +1654,7 @@ func ExampleSelectDataset_Executor_scannerScanVal() {
 }
 
 func ExampleForUpdate() {
-	sql, args, _ := From("test").ForUpdate(exp.Wait).Build()
+	sql, args, _ := pp.From("test").ForUpdate(exp.Wait).Build()
 	fmt.Println(sql, args)
 
 	// Output:
@@ -1660,7 +1662,7 @@ func ExampleForUpdate() {
 }
 
 func ExampleForUpdate_of() {
-	sql, args, _ := From("test").ForUpdate(exp.Wait, T("test")).Build()
+	sql, args, _ := pp.From("test").ForUpdate(exp.Wait, pp.T("test")).Build()
 	fmt.Println(sql, args)
 
 	// Output:
@@ -1668,13 +1670,13 @@ func ExampleForUpdate_of() {
 }
 
 func ExampleForUpdate_ofMultiple() {
-	sql, args, _ := From("table1").Join(
-		T("table2"),
-		On(I("table2.id").Eq(I("table1.id"))),
+	sql, args, _ := pp.From("table1").Join(
+		pp.T("table2"),
+		pp.On(pp.I("table2.id").Eq(pp.I("table1.id"))),
 	).ForUpdate(
 		exp.Wait,
-		T("table1"),
-		T("table2"),
+		pp.T("table1"),
+		pp.T("table2"),
 	).Build()
 	fmt.Println(sql, args)
 

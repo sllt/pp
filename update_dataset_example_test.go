@@ -1,8 +1,9 @@
 // nolint:lll // sql statements are long
-package pp
+package pp_test
 
 import (
 	"fmt"
+	"manlu.org/pp"
 
 	_ "manlu.org/pp/dialect/mysql"
 )
@@ -12,7 +13,7 @@ func ExampleUpdate_withStruct() {
 		Address string `db:"address"`
 		Name    string `db:"name"`
 	}
-	sql, args, _ := Update("items").Set(
+	sql, args, _ := pp.Update("items").Set(
 		item{Name: "Test", Address: "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
@@ -21,9 +22,9 @@ func ExampleUpdate_withStruct() {
 	// UPDATE "items" SET "address"='111 Test Addr',"name"='Test' []
 }
 
-func ExampleUpdate_withPpRecord() {
-	sql, args, _ := Update("items").Set(
-		Record{"name": "Test", "address": "111 Test Addr"},
+func ExampleUpdate_withGoquRecord() {
+	sql, args, _ := pp.Update("items").Set(
+		pp.Record{"name": "Test", "address": "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
 
@@ -32,7 +33,7 @@ func ExampleUpdate_withPpRecord() {
 }
 
 func ExampleUpdate_withMap() {
-	sql, args, _ := Update("items").Set(
+	sql, args, _ := pp.Update("items").Set(
 		map[string]interface{}{"name": "Test", "address": "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
@@ -46,7 +47,7 @@ func ExampleUpdate_withSkipUpdateTag() {
 		Address string `db:"address"`
 		Name    string `db:"name" pp:"skipupdate"`
 	}
-	sql, args, _ := Update("items").Set(
+	sql, args, _ := pp.Update("items").Set(
 		item{Name: "Test", Address: "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
@@ -58,8 +59,8 @@ func ExampleUpdate_withSkipUpdateTag() {
 func ExampleUpdateDataset_Executor() {
 	db := getDB()
 	update := db.Update("pp_user").
-		Where(C("first_name").Eq("Bob")).
-		Set(Record{"first_name": "Bobby"}).
+		Where(pp.C("first_name").Eq("Bob")).
+		Set(pp.Record{"first_name": "Bobby"}).
 		Executor()
 
 	if r, err := update.Exec(); err != nil {
@@ -77,8 +78,8 @@ func ExampleUpdateDataset_Executor_returning() {
 	db := getDB()
 	var ids []int64
 	update := db.Update("pp_user").
-		Set(Record{"last_name": "ucon"}).
-		Where(Ex{"last_name": "Yukon"}).
+		Set(pp.Record{"last_name": "ucon"}).
+		Where(pp.Ex{"last_name": "Yukon"}).
 		Returning("id").
 		Executor()
 	if err := update.ScanVals(&ids); err != nil {
@@ -92,18 +93,18 @@ func ExampleUpdateDataset_Executor_returning() {
 }
 
 func ExampleUpdateDataset_Returning() {
-	sql, _, _ := Update("test").
-		Set(Record{"foo": "bar"}).
+	sql, _, _ := pp.Update("test").
+		Set(pp.Record{"foo": "bar"}).
 		Returning("id").
 		Build()
 	fmt.Println(sql)
-	sql, _, _ = Update("test").
-		Set(Record{"foo": "bar"}).
-		Returning(T("test").All()).
+	sql, _, _ = pp.Update("test").
+		Set(pp.Record{"foo": "bar"}).
+		Returning(pp.T("test").All()).
 		Build()
 	fmt.Println(sql)
-	sql, _, _ = Update("test").
-		Set(Record{"foo": "bar"}).
+	sql, _, _ = pp.Update("test").
+		Set(pp.Record{"foo": "bar"}).
 		Returning("a", "b").
 		Build()
 	fmt.Println(sql)
@@ -114,10 +115,10 @@ func ExampleUpdateDataset_Returning() {
 }
 
 func ExampleUpdateDataset_With() {
-	sql, _, _ := Update("test").
-		With("some_vals(val)", From().Select(L("123"))).
-		Where(C("val").Eq(From("some_vals").Select("val"))).
-		Set(Record{"name": "Test"}).Build()
+	sql, _, _ := pp.Update("test").
+		With("some_vals(val)", pp.From().Select(pp.L("123"))).
+		Where(pp.C("val").Eq(pp.From("some_vals").Select("val"))).
+		Set(pp.Record{"name": "Test"}).Build()
 	fmt.Println(sql)
 
 	// Output:
@@ -125,11 +126,11 @@ func ExampleUpdateDataset_With() {
 }
 
 func ExampleUpdateDataset_WithRecursive() {
-	sql, _, _ := Update("nums").
-		WithRecursive("nums(x)", From().Select(L("1").As("num")).
-			UnionAll(From("nums").
-				Select(L("x+1").As("num")).Where(C("x").Lt(5)))).
-		Set(Record{"foo": T("nums").Col("num")}).
+	sql, _, _ := pp.Update("nums").
+		WithRecursive("nums(x)", pp.From().Select(pp.L("1").As("num")).
+			UnionAll(pp.From("nums").
+				Select(pp.L("x+1").As("num")).Where(pp.C("x").Lt(5)))).
+		Set(pp.Record{"foo": pp.T("nums").Col("num")}).
 		Build()
 	fmt.Println(sql)
 	// Output:
@@ -137,9 +138,9 @@ func ExampleUpdateDataset_WithRecursive() {
 }
 
 func ExampleUpdateDataset_Limit() {
-	ds := Dialect("mysql").
+	ds := pp.Dialect("mysql").
 		Update("test").
-		Set(Record{"foo": "bar"}).
+		Set(pp.Record{"foo": "bar"}).
 		Limit(10)
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
@@ -148,9 +149,9 @@ func ExampleUpdateDataset_Limit() {
 }
 
 func ExampleUpdateDataset_LimitAll() {
-	ds := Dialect("mysql").
+	ds := pp.Dialect("mysql").
 		Update("test").
-		Set(Record{"foo": "bar"}).
+		Set(pp.Record{"foo": "bar"}).
 		LimitAll()
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
@@ -159,9 +160,9 @@ func ExampleUpdateDataset_LimitAll() {
 }
 
 func ExampleUpdateDataset_ClearLimit() {
-	ds := Dialect("mysql").
+	ds := pp.Dialect("mysql").
 		Update("test").
-		Set(Record{"foo": "bar"}).
+		Set(pp.Record{"foo": "bar"}).
 		Limit(10)
 	sql, _, _ := ds.ClearLimit().Build()
 	fmt.Println(sql)
@@ -170,10 +171,10 @@ func ExampleUpdateDataset_ClearLimit() {
 }
 
 func ExampleUpdateDataset_Order() {
-	ds := Dialect("mysql").
+	ds := pp.Dialect("mysql").
 		Update("test").
-		Set(Record{"foo": "bar"}).
-		Order(C("a").Asc())
+		Set(pp.Record{"foo": "bar"}).
+		Order(pp.C("a").Asc())
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
 	// Output:
@@ -181,33 +182,33 @@ func ExampleUpdateDataset_Order() {
 }
 
 func ExampleUpdateDataset_OrderAppend() {
-	ds := Dialect("mysql").
+	ds := pp.Dialect("mysql").
 		Update("test").
-		Set(Record{"foo": "bar"}).
-		Order(C("a").Asc())
-	sql, _, _ := ds.OrderAppend(C("b").Desc().NullsLast()).Build()
+		Set(pp.Record{"foo": "bar"}).
+		Order(pp.C("a").Asc())
+	sql, _, _ := ds.OrderAppend(pp.C("b").Desc().NullsLast()).Build()
 	fmt.Println(sql)
 	// Output:
 	// UPDATE `test` SET `foo`='bar' ORDER BY `a` ASC, `b` DESC NULLS LAST
 }
 
 func ExampleUpdateDataset_OrderPrepend() {
-	ds := Dialect("mysql").
+	ds := pp.Dialect("mysql").
 		Update("test").
-		Set(Record{"foo": "bar"}).
-		Order(C("a").Asc())
+		Set(pp.Record{"foo": "bar"}).
+		Order(pp.C("a").Asc())
 
-	sql, _, _ := ds.OrderPrepend(C("b").Desc().NullsLast()).Build()
+	sql, _, _ := ds.OrderPrepend(pp.C("b").Desc().NullsLast()).Build()
 	fmt.Println(sql)
 	// Output:
 	// UPDATE `test` SET `foo`='bar' ORDER BY `b` DESC NULLS LAST, `a` ASC
 }
 
 func ExampleUpdateDataset_ClearOrder() {
-	ds := Dialect("mysql").
+	ds := pp.Dialect("mysql").
 		Update("test").
-		Set(Record{"foo": "bar"}).
-		Order(C("a").Asc())
+		Set(pp.Record{"foo": "bar"}).
+		Order(pp.C("a").Asc())
 	sql, _, _ := ds.ClearOrder().Build()
 	fmt.Println(sql)
 	// Output:
@@ -215,10 +216,10 @@ func ExampleUpdateDataset_ClearOrder() {
 }
 
 func ExampleUpdateDataset_From() {
-	ds := Update("table_one").
-		Set(Record{"foo": I("table_two.bar")}).
+	ds := pp.Update("table_one").
+		Set(pp.Record{"foo": pp.I("table_two.bar")}).
 		From("table_two").
-		Where(Ex{"table_one.id": I("table_two.id")})
+		Where(pp.Ex{"table_one.id": pp.I("table_two.id")})
 
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
@@ -227,12 +228,12 @@ func ExampleUpdateDataset_From() {
 }
 
 func ExampleUpdateDataset_From_postgres() {
-	dialect := Dialect("postgres")
+	dialect := pp.Dialect("postgres")
 
 	ds := dialect.Update("table_one").
-		Set(Record{"foo": I("table_two.bar")}).
+		Set(pp.Record{"foo": pp.I("table_two.bar")}).
 		From("table_two").
-		Where(Ex{"table_one.id": I("table_two.id")})
+		Where(pp.Ex{"table_one.id": pp.I("table_two.id")})
 
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
@@ -241,12 +242,12 @@ func ExampleUpdateDataset_From_postgres() {
 }
 
 func ExampleUpdateDataset_From_mysql() {
-	dialect := Dialect("mysql")
+	dialect := pp.Dialect("mysql")
 
 	ds := dialect.Update("table_one").
-		Set(Record{"foo": I("table_two.bar")}).
+		Set(pp.Record{"foo": pp.I("table_two.bar")}).
 		From("table_two").
-		Where(Ex{"table_one.id": I("table_two.id")})
+		Where(pp.Ex{"table_one.id": pp.I("table_two.id")})
 
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
@@ -256,35 +257,35 @@ func ExampleUpdateDataset_From_mysql() {
 
 func ExampleUpdateDataset_Where() {
 	// By default everything is anded together
-	sql, _, _ := Update("test").
-		Set(Record{"foo": "bar"}).
-		Where(Ex{
-			"a": Op{"gt": 10},
-			"b": Op{"lt": 10},
+	sql, _, _ := pp.Update("test").
+		Set(pp.Record{"foo": "bar"}).
+		Where(pp.Ex{
+			"a": pp.Op{"gt": 10},
+			"b": pp.Op{"lt": 10},
 			"c": nil,
 			"d": []string{"a", "b", "c"},
 		}).Build()
 	fmt.Println(sql)
 	// You can use ExOr to get ORed expressions together
-	sql, _, _ = Update("test").
-		Set(Record{"foo": "bar"}).
-		Where(ExOr{
-			"a": Op{"gt": 10},
-			"b": Op{"lt": 10},
+	sql, _, _ = pp.Update("test").
+		Set(pp.Record{"foo": "bar"}).
+		Where(pp.ExOr{
+			"a": pp.Op{"gt": 10},
+			"b": pp.Op{"lt": 10},
 			"c": nil,
 			"d": []string{"a", "b", "c"},
 		}).Build()
 	fmt.Println(sql)
 	// You can use Or with Ex to Or multiple Ex maps together
-	sql, _, _ = Update("test").
-		Set(Record{"foo": "bar"}).
+	sql, _, _ = pp.Update("test").
+		Set(pp.Record{"foo": "bar"}).
 		Where(
-			Or(
-				Ex{
-					"a": Op{"gt": 10},
-					"b": Op{"lt": 10},
+			pp.Or(
+				pp.Ex{
+					"a": pp.Op{"gt": 10},
+					"b": pp.Op{"lt": 10},
 				},
-				Ex{
+				pp.Ex{
 					"c": nil,
 					"d": []string{"a", "b", "c"},
 				},
@@ -292,24 +293,24 @@ func ExampleUpdateDataset_Where() {
 		).Build()
 	fmt.Println(sql)
 	// By default everything is anded together
-	sql, _, _ = Update("test").
-		Set(Record{"foo": "bar"}).
+	sql, _, _ = pp.Update("test").
+		Set(pp.Record{"foo": "bar"}).
 		Where(
-			C("a").Gt(10),
-			C("b").Lt(10),
-			C("c").IsNull(),
-			C("d").In("a", "b", "c"),
+			pp.C("a").Gt(10),
+			pp.C("b").Lt(10),
+			pp.C("c").IsNull(),
+			pp.C("d").In("a", "b", "c"),
 		).Build()
 	fmt.Println(sql)
 	// You can use a combination of Ors and Ands
-	sql, _, _ = Update("test").
-		Set(Record{"foo": "bar"}).
+	sql, _, _ = pp.Update("test").
+		Set(pp.Record{"foo": "bar"}).
 		Where(
-			Or(
-				C("a").Gt(10),
-				And(
-					C("b").Lt(10),
-					C("c").IsNull(),
+			pp.Or(
+				pp.C("a").Gt(10),
+				pp.And(
+					pp.C("b").Lt(10),
+					pp.C("c").IsNull(),
 				),
 			),
 		).Build()
@@ -324,36 +325,36 @@ func ExampleUpdateDataset_Where() {
 
 func ExampleUpdateDataset_Where_prepared() {
 	// By default everything is anded together
-	sql, args, _ := Update("test").
+	sql, args, _ := pp.Update("test").
 		Prepared(true).
-		Set(Record{"foo": "bar"}).
-		Where(Ex{
-			"a": Op{"gt": 10},
-			"b": Op{"lt": 10},
+		Set(pp.Record{"foo": "bar"}).
+		Where(pp.Ex{
+			"a": pp.Op{"gt": 10},
+			"b": pp.Op{"lt": 10},
 			"c": nil,
 			"d": []string{"a", "b", "c"},
 		}).Build()
 	fmt.Println(sql, args)
 	// You can use ExOr to get ORed expressions together
-	sql, args, _ = Update("test").Prepared(true).
-		Set(Record{"foo": "bar"}).
-		Where(ExOr{
-			"a": Op{"gt": 10},
-			"b": Op{"lt": 10},
+	sql, args, _ = pp.Update("test").Prepared(true).
+		Set(pp.Record{"foo": "bar"}).
+		Where(pp.ExOr{
+			"a": pp.Op{"gt": 10},
+			"b": pp.Op{"lt": 10},
 			"c": nil,
 			"d": []string{"a", "b", "c"},
 		}).Build()
 	fmt.Println(sql, args)
 	// You can use Or with Ex to Or multiple Ex maps together
-	sql, args, _ = Update("test").Prepared(true).
-		Set(Record{"foo": "bar"}).
+	sql, args, _ = pp.Update("test").Prepared(true).
+		Set(pp.Record{"foo": "bar"}).
 		Where(
-			Or(
-				Ex{
-					"a": Op{"gt": 10},
-					"b": Op{"lt": 10},
+			pp.Or(
+				pp.Ex{
+					"a": pp.Op{"gt": 10},
+					"b": pp.Op{"lt": 10},
 				},
-				Ex{
+				pp.Ex{
 					"c": nil,
 					"d": []string{"a", "b", "c"},
 				},
@@ -361,24 +362,24 @@ func ExampleUpdateDataset_Where_prepared() {
 		).Build()
 	fmt.Println(sql, args)
 	// By default everything is anded together
-	sql, args, _ = Update("test").Prepared(true).
-		Set(Record{"foo": "bar"}).
+	sql, args, _ = pp.Update("test").Prepared(true).
+		Set(pp.Record{"foo": "bar"}).
 		Where(
-			C("a").Gt(10),
-			C("b").Lt(10),
-			C("c").IsNull(),
-			C("d").In("a", "b", "c"),
+			pp.C("a").Gt(10),
+			pp.C("b").Lt(10),
+			pp.C("c").IsNull(),
+			pp.C("d").In("a", "b", "c"),
 		).Build()
 	fmt.Println(sql, args)
 	// You can use a combination of Ors and Ands
-	sql, args, _ = Update("test").Prepared(true).
-		Set(Record{"foo": "bar"}).
+	sql, args, _ = pp.Update("test").Prepared(true).
+		Set(pp.Record{"foo": "bar"}).
 		Where(
-			Or(
-				C("a").Gt(10),
-				And(
-					C("b").Lt(10),
-					C("c").IsNull(),
+			pp.Or(
+				pp.C("a").Gt(10),
+				pp.And(
+					pp.C("b").Lt(10),
+					pp.C("c").IsNull(),
 				),
 			),
 		).Build()
@@ -392,18 +393,18 @@ func ExampleUpdateDataset_Where_prepared() {
 }
 
 func ExampleUpdateDataset_ClearWhere() {
-	ds :=
+	ds := pp.
 		Update("test").
-			Set(Record{"foo": "bar"}).
-			Where(
-				Or(
-					C("a").Gt(10),
-					And(
-						C("b").Lt(10),
-						C("c").IsNull(),
-					),
+		Set(pp.Record{"foo": "bar"}).
+		Where(
+			pp.Or(
+				pp.C("a").Gt(10),
+				pp.And(
+					pp.C("b").Lt(10),
+					pp.C("c").IsNull(),
 				),
-			)
+			),
+		)
 	sql, _, _ := ds.ClearWhere().Build()
 	fmt.Println(sql)
 	// Output:
@@ -411,16 +412,16 @@ func ExampleUpdateDataset_ClearWhere() {
 }
 
 func ExampleUpdateDataset_Table() {
-	ds := Update("test")
-	sql, _, _ := ds.Table("test2").Set(Record{"foo": "bar"}).Build()
+	ds := pp.Update("test")
+	sql, _, _ := ds.Table("test2").Set(pp.Record{"foo": "bar"}).Build()
 	fmt.Println(sql)
 	// Output:
 	// UPDATE "test2" SET "foo"='bar'
 }
 
 func ExampleUpdateDataset_Table_aliased() {
-	ds := Update("test")
-	sql, _, _ := ds.Table(T("test").As("t")).Set(Record{"foo": "bar"}).Build()
+	ds := pp.Update("test")
+	sql, _, _ := ds.Table(pp.T("test").As("t")).Set(pp.Record{"foo": "bar"}).Build()
 	fmt.Println(sql)
 	// Output:
 	// UPDATE "test" AS "t" SET "foo"='bar'
@@ -431,17 +432,17 @@ func ExampleUpdateDataset_Set() {
 		Address string `db:"address"`
 		Name    string `db:"name"`
 	}
-	sql, args, _ := Update("items").Set(
+	sql, args, _ := pp.Update("items").Set(
 		item{Name: "Test", Address: "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = Update("items").Set(
-		Record{"name": "Test", "address": "111 Test Addr"},
+	sql, args, _ = pp.Update("items").Set(
+		pp.Record{"name": "Test", "address": "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = Update("items").Set(
+	sql, args, _ = pp.Update("items").Set(
 		map[string]interface{}{"name": "Test", "address": "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
@@ -457,7 +458,7 @@ func ExampleUpdateDataset_Set_struct() {
 		Address string `db:"address"`
 		Name    string `db:"name"`
 	}
-	sql, args, _ := Update("items").Set(
+	sql, args, _ := pp.Update("items").Set(
 		item{Name: "Test", Address: "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
@@ -467,8 +468,8 @@ func ExampleUpdateDataset_Set_struct() {
 }
 
 func ExampleUpdateDataset_Set_ppRecord() {
-	sql, args, _ := Update("items").Set(
-		Record{"name": "Test", "address": "111 Test Addr"},
+	sql, args, _ := pp.Update("items").Set(
+		pp.Record{"name": "Test", "address": "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
 
@@ -477,7 +478,7 @@ func ExampleUpdateDataset_Set_ppRecord() {
 }
 
 func ExampleUpdateDataset_Set_map() {
-	sql, args, _ := Update("items").Set(
+	sql, args, _ := pp.Update("items").Set(
 		map[string]interface{}{"name": "Test", "address": "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
@@ -491,7 +492,7 @@ func ExampleUpdateDataset_Set_withSkipUpdateTag() {
 		Address string `db:"address"`
 		Name    string `db:"name" pp:"skipupdate"`
 	}
-	sql, args, _ := Update("items").Set(
+	sql, args, _ := pp.Update("items").Set(
 		item{Name: "Test", Address: "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
@@ -505,12 +506,12 @@ func ExampleUpdateDataset_Set_withDefaultIfEmptyTag() {
 		Address string `db:"address"`
 		Name    string `db:"name" pp:"defaultifempty"`
 	}
-	sql, args, _ := Update("items").Set(
+	sql, args, _ := pp.Update("items").Set(
 		item{Address: "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = Update("items").Set(
+	sql, args, _ = pp.Update("items").Set(
 		item{Name: "Bob Yukon", Address: "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
@@ -525,7 +526,7 @@ func ExampleUpdateDataset_Set_withNoTags() {
 		Address string
 		Name    string
 	}
-	sql, args, _ := Update("items").Set(
+	sql, args, _ := pp.Update("items").Set(
 		item{Name: "Test", Address: "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
@@ -544,7 +545,7 @@ func ExampleUpdateDataset_Set_withEmbeddedStruct() {
 		FirstName string
 		LastName  string
 	}
-	ds := Update("user").Set(
+	ds := pp.Update("user").Set(
 		User{Address: Address{Street: "111 Street", State: "NY"}, FirstName: "Greg", LastName: "Farley"},
 	)
 	updateSQL, args, _ := ds.Build()
@@ -564,7 +565,7 @@ func ExampleUpdateDataset_Set_withIgnoredEmbedded() {
 		FirstName string
 		LastName  string
 	}
-	ds := Update("user").Set(
+	ds := pp.Update("user").Set(
 		User{Address: Address{Street: "111 Street", State: "NY"}, FirstName: "Greg", LastName: "Farley"},
 	)
 	updateSQL, args, _ := ds.Build()
@@ -584,7 +585,7 @@ func ExampleUpdateDataset_Set_withNilEmbeddedPointer() {
 		FirstName string
 		LastName  string
 	}
-	ds := Update("user").Set(
+	ds := pp.Update("user").Set(
 		User{FirstName: "Greg", LastName: "Farley"},
 	)
 	updateSQL, args, _ := ds.Build()
@@ -600,17 +601,17 @@ func ExampleUpdateDataset_Build_prepared() {
 		Name    string `db:"name"`
 	}
 
-	sql, args, _ := From("items").Prepared(true).Update().Set(
+	sql, args, _ := pp.From("items").Prepared(true).Update().Set(
 		item{Name: "Test", Address: "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = From("items").Prepared(true).Update().Set(
-		Record{"name": "Test", "address": "111 Test Addr"},
+	sql, args, _ = pp.From("items").Prepared(true).Update().Set(
+		pp.Record{"name": "Test", "address": "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = From("items").Prepared(true).Update().Set(
+	sql, args, _ = pp.From("items").Prepared(true).Update().Set(
 		map[string]interface{}{"name": "Test", "address": "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
@@ -621,8 +622,8 @@ func ExampleUpdateDataset_Build_prepared() {
 }
 
 func ExampleUpdateDataset_Prepared() {
-	sql, args, _ := Update("items").Prepared(true).Set(
-		Record{"name": "Test", "address": "111 Test Addr"},
+	sql, args, _ := pp.Update("items").Prepared(true).Set(
+		pp.Record{"name": "Test", "address": "111 Test Addr"},
 	).Build()
 	fmt.Println(sql, args)
 

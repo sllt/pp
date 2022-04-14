@@ -1,10 +1,10 @@
 package pp_test
 
 import (
+	"manlu.org/pp"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"manlu.org/pp"
 	"manlu.org/pp/exp"
 )
 
@@ -185,6 +185,6 @@ func (ges *ppExpressionsSuite) TestAll() {
 	ges.Equal(exp.NewSQLFunctionExpression("ALL ", ds), pp.All(ds))
 }
 
-func TestPpExpressions(t *testing.T) {
+func TestGoquExpressions(t *testing.T) {
 	suite.Run(t, new(ppExpressionsSuite))
 }

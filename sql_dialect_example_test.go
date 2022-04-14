@@ -1,15 +1,16 @@
-package pp
+package pp_test
 
 import (
 	"fmt"
+	"manlu.org/pp"
 )
 
 func ExampleRegisterDialect() {
-	opts := DefaultDialectOptions()
+	opts := pp.DefaultDialectOptions()
 	opts.QuoteRune = '`'
-	RegisterDialect("custom-dialect", opts)
+	pp.RegisterDialect("custom-dialect", opts)
 
-	dialect := Dialect("custom-dialect")
+	dialect := pp.Dialect("custom-dialect")
 
 	ds := dialect.From("test")
 

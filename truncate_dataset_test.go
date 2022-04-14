@@ -1,20 +1,21 @@
-package pp
+package pp_test
 
 import (
-	"manlu.org/pp/exp"
-	"manlu.org/pp/internal/builder"
-	"manlu.org/pp/internal/errors"
-	"manlu.org/pp/mocks"
+	"manlu.org/pp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"manlu.org/pp/exp"
+	"manlu.org/pp/internal/builder"
+	"manlu.org/pp/internal/errors"
+	"manlu.org/pp/mocks"
 )
 
 type (
 	truncateTestCase struct {
-		ds      *TruncateDataset
+		ds      *pp.TruncateDataset
 		clauses exp.TruncateClauses
 	}
 	truncateDatasetSuite struct {
@@ -29,55 +30,55 @@ func (tds *truncateDatasetSuite) assertCases(cases ...truncateTestCase) {
 }
 
 func (tds *truncateDatasetSuite) TestClone() {
-	ds := Truncate("test")
+	ds := pp.Truncate("test")
 	tds.Equal(ds, ds.Clone())
 }
 
 func (tds *truncateDatasetSuite) TestExpression() {
-	ds := Truncate("test")
+	ds := pp.Truncate("test")
 	tds.Equal(ds, ds.Expression())
 }
 
 func (tds *truncateDatasetSuite) TestDialect() {
-	ds := Truncate("test")
+	ds := pp.Truncate("test")
 	tds.NotNil(ds.Dialect())
 }
 
 func (tds *truncateDatasetSuite) TestWithDialect() {
-	ds := Truncate("test")
+	ds := pp.Truncate("test")
 	md := new(mocks.SQLDialect)
 	ds = ds.SetDialect(md)
 
-	dialect := GetDialect("default")
+	dialect := pp.GetDialect("default")
 	dialectDs := ds.WithDialect("default")
 	tds.Equal(md, ds.Dialect())
 	tds.Equal(dialect, dialectDs.Dialect())
 }
 
 func (tds *truncateDatasetSuite) TestPrepared() {
-	ds := Truncate("test")
+	ds := pp.Truncate("test")
 	preparedDs := ds.Prepared(true)
 	tds.True(preparedDs.IsPrepared())
 	tds.False(ds.IsPrepared())
 	// should apply the prepared to any datasets created from the root
 	tds.True(preparedDs.Restrict().IsPrepared())
 
-	defer SetDefaultPrepared(false)
-	SetDefaultPrepared(true)
+	defer pp.SetDefaultPrepared(false)
+	pp.SetDefaultPrepared(true)
 
 	// should be prepared by default
-	ds = Truncate("test")
+	ds = pp.Truncate("test")
 	tds.True(ds.IsPrepared())
 }
 
 func (tds *truncateDatasetSuite) TestGetClauses() {
-	ds := Truncate("test")
-	ce := exp.NewTruncateClauses().SetTable(exp.NewColumnListExpression(I("test")))
+	ds := pp.Truncate("test")
+	ce := exp.NewTruncateClauses().SetTable(exp.NewColumnListExpression(pp.I("test")))
 	tds.Equal(ce, ds.GetClauses())
 }
 
 func (tds *truncateDatasetSuite) TestTable() {
-	bd := Truncate("test")
+	bd := pp.Truncate("test")
 	tds.assertCases(
 		truncateTestCase{
 			ds: bd.Table("test2"),
@@ -98,7 +99,7 @@ func (tds *truncateDatasetSuite) TestTable() {
 }
 
 func (tds *truncateDatasetSuite) TestCascade() {
-	bd := Truncate("test")
+	bd := pp.Truncate("test")
 	tds.assertCases(
 		truncateTestCase{
 			ds: bd.Cascade(),
@@ -121,7 +122,7 @@ func (tds *truncateDatasetSuite) TestCascade() {
 }
 
 func (tds *truncateDatasetSuite) TestNoCascade() {
-	bd := Truncate("test").Cascade()
+	bd := pp.Truncate("test").Cascade()
 	tds.assertCases(
 		truncateTestCase{
 			ds: bd.NoCascade(),
@@ -145,7 +146,7 @@ func (tds *truncateDatasetSuite) TestNoCascade() {
 }
 
 func (tds *truncateDatasetSuite) TestRestrict() {
-	bd := Truncate("test")
+	bd := pp.Truncate("test")
 	tds.assertCases(
 		truncateTestCase{
 			ds: bd.Restrict(),
@@ -168,7 +169,7 @@ func (tds *truncateDatasetSuite) TestRestrict() {
 }
 
 func (tds *truncateDatasetSuite) TestNoRestrict() {
-	bd := Truncate("test").Restrict()
+	bd := pp.Truncate("test").Restrict()
 	tds.assertCases(
 		truncateTestCase{
 			ds: bd.NoRestrict(),
@@ -192,7 +193,7 @@ func (tds *truncateDatasetSuite) TestNoRestrict() {
 }
 
 func (tds *truncateDatasetSuite) TestIdentity() {
-	bd := Truncate("test")
+	bd := pp.Truncate("test")
 	tds.assertCases(
 		truncateTestCase{
 			ds: bd.Identity("RESTART"),
@@ -222,7 +223,7 @@ func (tds *truncateDatasetSuite) TestIdentity() {
 
 func (tds *truncateDatasetSuite) TestBuild() {
 	md := new(mocks.SQLDialect)
-	ds := Truncate("test").SetDialect(md)
+	ds := pp.Truncate("test").SetDialect(md)
 	c := ds.GetClauses()
 	sqlB := builder.NewSQLBuilder(false)
 	md.On("ToTruncateSQL", sqlB, c).Return(nil).Once()
@@ -236,7 +237,7 @@ func (tds *truncateDatasetSuite) TestBuild() {
 
 func (tds *truncateDatasetSuite) TestBuild__withPrepared() {
 	md := new(mocks.SQLDialect)
-	ds := Truncate("test").Prepared(true).SetDialect(md)
+	ds := pp.Truncate("test").Prepared(true).SetDialect(md)
 	c := ds.GetClauses()
 	sqlB := builder.NewSQLBuilder(true)
 	md.On("ToTruncateSQL", sqlB, c).Return(nil).Once()
@@ -250,7 +251,7 @@ func (tds *truncateDatasetSuite) TestBuild__withPrepared() {
 
 func (tds *truncateDatasetSuite) TestBuild_withError() {
 	md := new(mocks.SQLDialect)
-	ds := Truncate("test").SetDialect(md)
+	ds := pp.Truncate("test").SetDialect(md)
 	c := ds.GetClauses()
 	ee := errors.New("expected error")
 	sqlB := builder.NewSQLBuilder(false)
@@ -269,7 +270,7 @@ func (tds *truncateDatasetSuite) TestExecutor() {
 	mDB, _, err := sqlmock.New()
 	tds.NoError(err)
 
-	ds := New("mock", mDB).Truncate("table1", "table2")
+	ds := pp.New("mock", mDB).Truncate("table1", "table2")
 
 	tsql, args, err := ds.Executor().Build()
 	tds.NoError(err)
@@ -281,8 +282,8 @@ func (tds *truncateDatasetSuite) TestExecutor() {
 	tds.Empty(args)
 	tds.Equal(`TRUNCATE "table1", "table2"`, tsql)
 
-	defer SetDefaultPrepared(false)
-	SetDefaultPrepared(true)
+	defer pp.SetDefaultPrepared(false)
+	pp.SetDefaultPrepared(true)
 
 	tsql, args, err = ds.Executor().Build()
 	tds.NoError(err)
@@ -297,7 +298,7 @@ func (tds *truncateDatasetSuite) TestSetError() {
 
 	// Verify initial error set/get works properly
 	md := new(mocks.SQLDialect)
-	ds := Truncate("test").SetDialect(md)
+	ds := pp.Truncate("test").SetDialect(md)
 	ds = ds.SetError(err1)
 	tds.Equal(err1, ds.Error())
 	sql, args, err := ds.Build()

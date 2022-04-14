@@ -1,9 +1,10 @@
-package pp
+package pp_test
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
+	"manlu.org/pp"
 	"time"
 )
 
@@ -17,8 +18,8 @@ func ExampleDatabase_Begin() {
 
 	// use tx.From to get a dataset that will execute within this transaction
 	update := tx.Update("pp_user").
-		Set(Record{"last_name": "Ucon"}).
-		Where(Ex{"last_name": "Yukon"}).
+		Set(pp.Record{"last_name": "Ucon"}).
+		Where(pp.Ex{"last_name": "Yukon"}).
 		Returning("id").
 		Executor()
 
@@ -51,8 +52,8 @@ func ExampleDatabase_BeginTx() {
 
 	// use tx.From to get a dataset that will execute within this transaction
 	update := tx.Update("pp_user").
-		Set(Record{"last_name": "Ucon"}).
-		Where(Ex{"last_name": "Yukon"}).
+		Set(pp.Record{"last_name": "Ucon"}).
+		Where(pp.Ex{"last_name": "Yukon"}).
 		Returning("id").
 		Executor()
 
@@ -77,12 +78,12 @@ func ExampleDatabase_BeginTx() {
 func ExampleDatabase_WithTx() {
 	db := getDB()
 	var ids []int64
-	if err := db.WithTx(func(tx *TxDatabase) error {
+	if err := db.WithTx(func(tx *pp.TxDatabase) error {
 		// use tx.From to get a dataset that will execute within this transaction
 		update := tx.Update("pp_user").
-			Where(Ex{"last_name": "Yukon"}).
+			Where(pp.Ex{"last_name": "Yukon"}).
 			Returning("id").
-			Set(Record{"last_name": "Ucon"}).
+			Set(pp.Record{"last_name": "Ucon"}).
 			Executor()
 
 		return update.ScanVals(&ids)

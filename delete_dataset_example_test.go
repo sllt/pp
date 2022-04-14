@@ -1,13 +1,14 @@
-package pp
+package pp_test
 
 import (
 	"fmt"
+	"manlu.org/pp"
 
 	_ "manlu.org/pp/dialect/mysql"
 )
 
 func ExampleDelete() {
-	ds := Delete("items")
+	ds := pp.Delete("items")
 
 	sql, args, _ := ds.Build()
 	fmt.Println(sql, args)
@@ -19,8 +20,8 @@ func ExampleDelete() {
 func ExampleDeleteDataset_Executor() {
 	db := getDB()
 
-	de := db.Delete("user").
-		Where(Ex{"first_name": "Bob"}).
+	de := db.Delete("pp_user").
+		Where(pp.Ex{"first_name": "Bob"}).
 		Executor()
 	if r, err := de.Exec(); err != nil {
 		fmt.Println(err.Error())
@@ -36,9 +37,9 @@ func ExampleDeleteDataset_Executor() {
 func ExampleDeleteDataset_Executor_returning() {
 	db := getDB()
 
-	de := db.Delete("user").
-		Where(C("last_name").Eq("Yukon")).
-		Returning(C("id")).
+	de := db.Delete("pp_user").
+		Where(pp.C("last_name").Eq("Yukon")).
+		Returning(pp.C("id")).
 		Executor()
 
 	var ids []int64
@@ -53,9 +54,9 @@ func ExampleDeleteDataset_Executor_returning() {
 }
 
 func ExampleDeleteDataset_With() {
-	sql, _, _ := Delete("test").
-		With("check_vals(val)", From().Select(L("123"))).
-		Where(C("val").Eq(From("check_vals").Select("val"))).
+	sql, _, _ := pp.Delete("test").
+		With("check_vals(val)", pp.From().Select(pp.L("123"))).
+		Where(pp.C("val").Eq(pp.From("check_vals").Select("val"))).
 		Build()
 	fmt.Println(sql)
 
@@ -64,11 +65,11 @@ func ExampleDeleteDataset_With() {
 }
 
 func ExampleDeleteDataset_WithRecursive() {
-	sql, _, _ := Delete("nums").
+	sql, _, _ := pp.Delete("nums").
 		WithRecursive("nums(x)",
-			From().Select(L("1")).
-				UnionAll(From("nums").
-					Select(L("x+1")).Where(C("x").Lt(5)))).
+			pp.From().Select(pp.L("1")).
+				UnionAll(pp.From("nums").
+					Select(pp.L("x+1")).Where(pp.C("x").Lt(5)))).
 		Build()
 	fmt.Println(sql)
 	// Output:
@@ -77,29 +78,29 @@ func ExampleDeleteDataset_WithRecursive() {
 
 func ExampleDeleteDataset_Where() {
 	// By default everything is anded together
-	sql, _, _ := Delete("test").Where(Ex{
-		"a": Op{"gt": 10},
-		"b": Op{"lt": 10},
+	sql, _, _ := pp.Delete("test").Where(pp.Ex{
+		"a": pp.Op{"gt": 10},
+		"b": pp.Op{"lt": 10},
 		"c": nil,
 		"d": []string{"a", "b", "c"},
 	}).Build()
 	fmt.Println(sql)
 	// You can use ExOr to get ORed expressions together
-	sql, _, _ = Delete("test").Where(ExOr{
-		"a": Op{"gt": 10},
-		"b": Op{"lt": 10},
+	sql, _, _ = pp.Delete("test").Where(pp.ExOr{
+		"a": pp.Op{"gt": 10},
+		"b": pp.Op{"lt": 10},
 		"c": nil,
 		"d": []string{"a", "b", "c"},
 	}).Build()
 	fmt.Println(sql)
 	// You can use Or with Ex to Or multiple Ex maps together
-	sql, _, _ = Delete("test").Where(
-		Or(
-			Ex{
-				"a": Op{"gt": 10},
-				"b": Op{"lt": 10},
+	sql, _, _ = pp.Delete("test").Where(
+		pp.Or(
+			pp.Ex{
+				"a": pp.Op{"gt": 10},
+				"b": pp.Op{"lt": 10},
 			},
-			Ex{
+			pp.Ex{
 				"c": nil,
 				"d": []string{"a", "b", "c"},
 			},
@@ -107,20 +108,20 @@ func ExampleDeleteDataset_Where() {
 	).Build()
 	fmt.Println(sql)
 	// By default everything is anded together
-	sql, _, _ = Delete("test").Where(
-		C("a").Gt(10),
-		C("b").Lt(10),
-		C("c").IsNull(),
-		C("d").In("a", "b", "c"),
+	sql, _, _ = pp.Delete("test").Where(
+		pp.C("a").Gt(10),
+		pp.C("b").Lt(10),
+		pp.C("c").IsNull(),
+		pp.C("d").In("a", "b", "c"),
 	).Build()
 	fmt.Println(sql)
 	// You can use a combination of Ors and Ands
-	sql, _, _ = Delete("test").Where(
-		Or(
-			C("a").Gt(10),
-			And(
-				C("b").Lt(10),
-				C("c").IsNull(),
+	sql, _, _ = pp.Delete("test").Where(
+		pp.Or(
+			pp.C("a").Gt(10),
+			pp.And(
+				pp.C("b").Lt(10),
+				pp.C("c").IsNull(),
 			),
 		),
 	).Build()
@@ -135,29 +136,29 @@ func ExampleDeleteDataset_Where() {
 
 func ExampleDeleteDataset_Where_prepared() {
 	// By default everything is anded together
-	sql, args, _ := Delete("test").Prepared(true).Where(Ex{
-		"a": Op{"gt": 10},
-		"b": Op{"lt": 10},
+	sql, args, _ := pp.Delete("test").Prepared(true).Where(pp.Ex{
+		"a": pp.Op{"gt": 10},
+		"b": pp.Op{"lt": 10},
 		"c": nil,
 		"d": []string{"a", "b", "c"},
 	}).Build()
 	fmt.Println(sql, args)
 	// You can use ExOr to get ORed expressions together
-	sql, args, _ = Delete("test").Prepared(true).Where(ExOr{
-		"a": Op{"gt": 10},
-		"b": Op{"lt": 10},
+	sql, args, _ = pp.Delete("test").Prepared(true).Where(pp.ExOr{
+		"a": pp.Op{"gt": 10},
+		"b": pp.Op{"lt": 10},
 		"c": nil,
 		"d": []string{"a", "b", "c"},
 	}).Build()
 	fmt.Println(sql, args)
 	// You can use Or with Ex to Or multiple Ex maps together
-	sql, args, _ = Delete("test").Prepared(true).Where(
-		Or(
-			Ex{
-				"a": Op{"gt": 10},
-				"b": Op{"lt": 10},
+	sql, args, _ = pp.Delete("test").Prepared(true).Where(
+		pp.Or(
+			pp.Ex{
+				"a": pp.Op{"gt": 10},
+				"b": pp.Op{"lt": 10},
 			},
-			Ex{
+			pp.Ex{
 				"c": nil,
 				"d": []string{"a", "b", "c"},
 			},
@@ -165,20 +166,20 @@ func ExampleDeleteDataset_Where_prepared() {
 	).Build()
 	fmt.Println(sql, args)
 	// By default everything is anded together
-	sql, args, _ = Delete("test").Prepared(true).Where(
-		C("a").Gt(10),
-		C("b").Lt(10),
-		C("c").IsNull(),
-		C("d").In("a", "b", "c"),
+	sql, args, _ = pp.Delete("test").Prepared(true).Where(
+		pp.C("a").Gt(10),
+		pp.C("b").Lt(10),
+		pp.C("c").IsNull(),
+		pp.C("d").In("a", "b", "c"),
 	).Build()
 	fmt.Println(sql, args)
 	// You can use a combination of Ors and Ands
-	sql, args, _ = Delete("test").Prepared(true).Where(
-		Or(
-			C("a").Gt(10),
-			And(
-				C("b").Lt(10),
-				C("c").IsNull(),
+	sql, args, _ = pp.Delete("test").Prepared(true).Where(
+		pp.Or(
+			pp.C("a").Gt(10),
+			pp.And(
+				pp.C("b").Lt(10),
+				pp.C("c").IsNull(),
 			),
 		),
 	).Build()
@@ -192,12 +193,12 @@ func ExampleDeleteDataset_Where_prepared() {
 }
 
 func ExampleDeleteDataset_ClearWhere() {
-	ds := Delete("test").Where(
-		Or(
-			C("a").Gt(10),
-			And(
-				C("b").Lt(10),
-				C("c").IsNull(),
+	ds := pp.Delete("test").Where(
+		pp.Or(
+			pp.C("a").Gt(10),
+			pp.And(
+				pp.C("b").Lt(10),
+				pp.C("c").IsNull(),
 			),
 		),
 	)
@@ -208,7 +209,7 @@ func ExampleDeleteDataset_ClearWhere() {
 }
 
 func ExampleDeleteDataset_Limit() {
-	ds := Dialect("mysql").Delete("test").Limit(10)
+	ds := pp.Dialect("mysql").Delete("test").Limit(10)
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
 	// Output:
@@ -216,8 +217,8 @@ func ExampleDeleteDataset_Limit() {
 }
 
 func ExampleDeleteDataset_LimitAll() {
-	// Using mysql dialect because it surts limit on delete
-	ds := Dialect("mysql").Delete("test").LimitAll()
+	// Using mysql dialect because it supports limit on delete
+	ds := pp.Dialect("mysql").Delete("test").LimitAll()
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
 	// Output:
@@ -225,8 +226,8 @@ func ExampleDeleteDataset_LimitAll() {
 }
 
 func ExampleDeleteDataset_ClearLimit() {
-	// Using mysql dialect because it surts limit on delete
-	ds := Dialect("mysql").Delete("test").Limit(10)
+	// Using mysql dialect because it supports limit on delete
+	ds := pp.Dialect("mysql").Delete("test").Limit(10)
 	sql, _, _ := ds.ClearLimit().Build()
 	fmt.Println(sql)
 	// Output:
@@ -234,34 +235,34 @@ func ExampleDeleteDataset_ClearLimit() {
 }
 
 func ExampleDeleteDataset_Order() {
-	// use mysql dialect because it surts order by on deletes
-	ds := Dialect("mysql").Delete("test").Order(C("a").Asc())
+	// use mysql dialect because it supports order by on deletes
+	ds := pp.Dialect("mysql").Delete("test").Order(pp.C("a").Asc())
 	sql, _, _ := ds.Build()
 	fmt.Println(sql)
 	// Output:
 	// DELETE FROM `test` ORDER BY `a` ASC
 }
 
-func ExampleDeleteDataset_OrderAnd() {
-	// use mysql dialect because it surts order by on deletes
-	ds := Dialect("mysql").Delete("test").Order(C("a").Asc())
-	sql, _, _ := ds.Order(C("b").Desc().NullsLast()).Build()
+func ExampleDeleteDataset_OrderAppend() {
+	// use mysql dialect because it supports order by on deletes
+	ds := pp.Dialect("mysql").Delete("test").Order(pp.C("a").Asc())
+	sql, _, _ := ds.OrderAppend(pp.C("b").Desc().NullsLast()).Build()
 	fmt.Println(sql)
 	// Output:
 	// DELETE FROM `test` ORDER BY `a` ASC, `b` DESC NULLS LAST
 }
 
 func ExampleDeleteDataset_OrderPrepend() {
-	// use mysql dialect because it surts order by on deletes
-	ds := Dialect("mysql").Delete("test").Order(C("a").Asc())
-	sql, _, _ := ds.OrderPrepend(C("b").Desc().NullsLast()).Build()
+	// use mysql dialect because it supports order by on deletes
+	ds := pp.Dialect("mysql").Delete("test").Order(pp.C("a").Asc())
+	sql, _, _ := ds.OrderPrepend(pp.C("b").Desc().NullsLast()).Build()
 	fmt.Println(sql)
 	// Output:
 	// DELETE FROM `test` ORDER BY `b` DESC NULLS LAST, `a` ASC
 }
 
 func ExampleDeleteDataset_ClearOrder() {
-	ds := Delete("test").Order(C("a").Asc())
+	ds := pp.Delete("test").Order(pp.C("a").Asc())
 	sql, _, _ := ds.ClearOrder().Build()
 	fmt.Println(sql)
 	// Output:
@@ -269,11 +270,11 @@ func ExampleDeleteDataset_ClearOrder() {
 }
 
 func ExampleDeleteDataset_Build() {
-	sql, args, _ := Delete("items").Build()
+	sql, args, _ := pp.Delete("items").Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = Delete("items").
-		Where(Ex{"id": Op{"gt": 10}}).
+	sql, args, _ = pp.Delete("items").
+		Where(pp.Ex{"id": pp.Op{"gt": 10}}).
 		Build()
 	fmt.Println(sql, args)
 
@@ -283,12 +284,12 @@ func ExampleDeleteDataset_Build() {
 }
 
 func ExampleDeleteDataset_Prepared() {
-	sql, args, _ := Delete("items").Prepared(true).Build()
+	sql, args, _ := pp.Delete("items").Prepared(true).Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = Delete("items").
+	sql, args, _ = pp.Delete("items").
 		Prepared(true).
-		Where(Ex{"id": Op{"gt": 10}}).
+		Where(pp.Ex{"id": pp.Op{"gt": 10}}).
 		Build()
 	fmt.Println(sql, args)
 
@@ -298,11 +299,11 @@ func ExampleDeleteDataset_Prepared() {
 }
 
 func ExampleDeleteDataset_Returning() {
-	ds := Delete("items")
+	ds := pp.Delete("items")
 	sql, args, _ := ds.Returning("id").Build()
 	fmt.Println(sql, args)
 
-	sql, args, _ = ds.Returning("id").Where(C("id").IsNotNull()).Build()
+	sql, args, _ = ds.Returning("id").Where(pp.C("id").IsNotNull()).Build()
 	fmt.Println(sql, args)
 
 	// Output:

@@ -1,12 +1,12 @@
 package pp
 
 import (
-	"manlu.org/pp/exp"
-	"manlu.org/pp/gen/mocks"
 	"manlu.org/pp/internal/builder"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"manlu.org/pp/exp"
+	"manlu.org/pp/gen/mocks"
 )
 
 type dialectTestSuite struct {

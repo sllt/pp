@@ -1,20 +1,21 @@
-package pp
+package pp_test
 
 import (
-	"manlu.org/pp/exp"
-	"manlu.org/pp/internal/builder"
-	"manlu.org/pp/internal/errors"
-	"manlu.org/pp/mocks"
+	"manlu.org/pp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"manlu.org/pp/exp"
+	"manlu.org/pp/internal/builder"
+	"manlu.org/pp/internal/errors"
+	"manlu.org/pp/mocks"
 )
 
 type (
 	selectTestCase struct {
-		ds      *SelectDataset
+		ds      *pp.SelectDataset
 		clauses exp.SelectClauses
 	}
 	dsTestActionItem struct {
@@ -38,70 +39,70 @@ func (sds *selectDatasetSuite) assertCases(cases ...selectTestCase) {
 }
 
 func (sds *selectDatasetSuite) TestReturnsColumns() {
-	ds := Select(L("NOW()"))
+	ds := pp.Select(pp.L("NOW()"))
 	sds.True(ds.ReturnsColumns())
 }
 
 func (sds *selectDatasetSuite) TestClone() {
-	ds := From("test")
+	ds := pp.From("test")
 	sds.Equal(ds, ds.Clone())
 }
 
 func (sds *selectDatasetSuite) TestExpression() {
-	ds := From("test")
+	ds := pp.From("test")
 	sds.Equal(ds, ds.Expression())
 }
 
 func (sds *selectDatasetSuite) TestDialect() {
-	ds := From("test")
+	ds := pp.From("test")
 	sds.NotNil(ds.Dialect())
 }
 
 func (sds *selectDatasetSuite) TestWithDialect() {
-	ds := From("test")
+	ds := pp.From("test")
 	md := new(mocks.SQLDialect)
 	ds = ds.SetDialect(md)
 
-	dialect := GetDialect("default")
+	dialect := pp.GetDialect("default")
 	dialectDs := ds.WithDialect("default")
 	sds.Equal(md, ds.Dialect())
 	sds.Equal(dialect, dialectDs.Dialect())
 }
 
 func (sds *selectDatasetSuite) TestPrepared() {
-	ds := From("test")
+	ds := pp.From("test")
 	preparedDs := ds.Prepared(true)
 	sds.True(preparedDs.IsPrepared())
 	sds.False(ds.IsPrepared())
 	// should apply the prepared to any datasets created from the root
-	sds.True(preparedDs.Where(Ex{"a": 1}).IsPrepared())
+	sds.True(preparedDs.Where(pp.Ex{"a": 1}).IsPrepared())
 
-	defer SetDefaultPrepared(false)
-	SetDefaultPrepared(true)
+	defer pp.SetDefaultPrepared(false)
+	pp.SetDefaultPrepared(true)
 
 	// should be prepared by default
-	ds = From("test")
+	ds = pp.From("test")
 	sds.True(ds.IsPrepared())
 }
 
 func (sds *selectDatasetSuite) TestGetClauses() {
-	ds := From("test")
-	ce := exp.NewSelectClauses().SetFrom(exp.NewColumnListExpression(I("test")))
+	ds := pp.From("test")
+	ce := exp.NewSelectClauses().SetFrom(exp.NewColumnListExpression(pp.I("test")))
 	sds.Equal(ce, ds.GetClauses())
 }
 
 func (sds *selectDatasetSuite) TestUpdate() {
-	where := Ex{"a": 1}
-	from := From("cte")
+	where := pp.Ex{"a": 1}
+	from := pp.From("cte")
 	limit := uint(1)
-	order := []exp.OrderedExpression{C("a").Asc(), C("b").Desc()}
-	ds := From("test").
+	order := []exp.OrderedExpression{pp.C("a").Asc(), pp.C("b").Desc()}
+	ds := pp.From("test").
 		With("test-cte", from).
 		Where(where).
 		Limit(limit).
 		Order(order...)
 	ec := exp.NewUpdateClauses().
-		SetTable(C("test")).
+		SetTable(pp.C("test")).
 		CommonTablesAppend(exp.NewCommonTableExpression(false, "test-cte", from)).
 		WhereAppend(ds.GetClauses().Where()).
 		SetLimit(limit).
@@ -110,33 +111,33 @@ func (sds *selectDatasetSuite) TestUpdate() {
 }
 
 func (sds *selectDatasetSuite) TestInsert() {
-	where := Ex{"a": 1}
-	from := From("cte")
+	where := pp.Ex{"a": 1}
+	from := pp.From("cte")
 	limit := uint(1)
-	order := []exp.OrderedExpression{C("a").Asc(), C("b").Desc()}
-	ds := From("test").
+	order := []exp.OrderedExpression{pp.C("a").Asc(), pp.C("b").Desc()}
+	ds := pp.From("test").
 		With("test-cte", from).
 		Where(where).
 		Limit(limit).
 		Order(order...)
 	ec := exp.NewInsertClauses().
-		SetInto(C("test")).
+		SetInto(pp.C("test")).
 		CommonTablesAppend(exp.NewCommonTableExpression(false, "test-cte", from))
 	sds.Equal(ec, ds.Insert().GetClauses())
 }
 
 func (sds *selectDatasetSuite) TestDelete() {
-	where := Ex{"a": 1}
-	from := From("cte")
+	where := pp.Ex{"a": 1}
+	from := pp.From("cte")
 	limit := uint(1)
-	order := []exp.OrderedExpression{C("a").Asc(), C("b").Desc()}
-	ds := From("test").
+	order := []exp.OrderedExpression{pp.C("a").Asc(), pp.C("b").Desc()}
+	ds := pp.From("test").
 		With("test-cte", from).
 		Where(where).
 		Limit(limit).
 		Order(order...)
 	ec := exp.NewDeleteClauses().
-		SetFrom(C("test")).
+		SetFrom(pp.C("test")).
 		CommonTablesAppend(exp.NewCommonTableExpression(false, "test-cte", from)).
 		WhereAppend(ds.GetClauses().Where()).
 		SetLimit(limit).
@@ -145,11 +146,11 @@ func (sds *selectDatasetSuite) TestDelete() {
 }
 
 func (sds *selectDatasetSuite) TestTruncate() {
-	where := Ex{"a": 1}
-	from := From("cte")
+	where := pp.Ex{"a": 1}
+	from := pp.From("cte")
 	limit := uint(1)
-	order := []exp.OrderedExpression{C("a").Asc(), C("b").Desc()}
-	ds := From("test").
+	order := []exp.OrderedExpression{pp.C("a").Asc(), pp.C("b").Desc()}
+	ds := pp.From("test").
 		With("test-cte", from).
 		Where(where).
 		Limit(limit).
@@ -160,8 +161,8 @@ func (sds *selectDatasetSuite) TestTruncate() {
 }
 
 func (sds *selectDatasetSuite) TestWith() {
-	from := From("cte")
-	bd := From("test")
+	from := pp.From("cte")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.With("test-cte", from),
@@ -177,8 +178,8 @@ func (sds *selectDatasetSuite) TestWith() {
 }
 
 func (sds *selectDatasetSuite) TestWithRecursive() {
-	from := From("cte")
-	bd := From("test")
+	from := pp.From("cte")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.WithRecursive("test-cte", from),
@@ -194,7 +195,7 @@ func (sds *selectDatasetSuite) TestWithRecursive() {
 }
 
 func (sds *selectDatasetSuite) TestSelect() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.Select("a", "b"),
@@ -221,7 +222,7 @@ func (sds *selectDatasetSuite) TestSelect() {
 }
 
 func (sds *selectDatasetSuite) TestSelectDistinct() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.SelectDistinct("a", "b"),
@@ -248,14 +249,14 @@ func (sds *selectDatasetSuite) TestSelectDistinct() {
 			ds: bd.Select("a").SelectDistinct(),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetSelect(exp.NewColumnListExpression(Star())).
+				SetSelect(exp.NewColumnListExpression(pp.Star())).
 				SetDistinct(nil),
 		},
 		selectTestCase{
 			ds: bd.SelectDistinct("a").SelectDistinct(),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetSelect(exp.NewColumnListExpression(Star())).
+				SetSelect(exp.NewColumnListExpression(pp.Star())).
 				SetDistinct(nil),
 		},
 		selectTestCase{
@@ -266,7 +267,7 @@ func (sds *selectDatasetSuite) TestSelectDistinct() {
 }
 
 func (sds *selectDatasetSuite) TestClearSelect() {
-	bd := From("test").Select("a")
+	bd := pp.From("test").Select("a")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.ClearSelect(),
@@ -283,7 +284,7 @@ func (sds *selectDatasetSuite) TestClearSelect() {
 }
 
 func (sds *selectDatasetSuite) TestSelectAppend() {
-	bd := From("test").Select("a")
+	bd := pp.From("test").Select("a")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.SelectAppend("b"),
@@ -301,7 +302,7 @@ func (sds *selectDatasetSuite) TestSelectAppend() {
 }
 
 func (sds *selectDatasetSuite) TestDistinct() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.Distinct("a", "b"),
@@ -323,17 +324,17 @@ func (sds *selectDatasetSuite) TestDistinct() {
 }
 
 func (sds *selectDatasetSuite) TestFrom() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.From(T("test2")),
+			ds: bd.From(pp.T("test2")),
 			clauses: exp.NewSelectClauses().
-				SetFrom(exp.NewColumnListExpression(T("test2"))),
+				SetFrom(exp.NewColumnListExpression(pp.T("test2"))),
 		},
 		selectTestCase{
-			ds: bd.From(From("test")),
+			ds: bd.From(pp.From("test")),
 			clauses: exp.NewSelectClauses().
-				SetFrom(exp.NewColumnListExpression(From("test").As("t1"))),
+				SetFrom(exp.NewColumnListExpression(pp.From("test").As("t1"))),
 		},
 		selectTestCase{
 			ds:      bd,
@@ -343,7 +344,7 @@ func (sds *selectDatasetSuite) TestFrom() {
 }
 
 func (sds *selectDatasetSuite) TestFromSelf() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.FromSelf(),
@@ -363,7 +364,7 @@ func (sds *selectDatasetSuite) TestFromSelf() {
 }
 
 func (sds *selectDatasetSuite) TestCompoundFromSelf() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds:      bd.CompoundFromSelf(),
@@ -374,9 +375,9 @@ func (sds *selectDatasetSuite) TestCompoundFromSelf() {
 			clauses: exp.NewSelectClauses().SetFrom(exp.NewColumnListExpression(bd.Limit(10).As("t1"))),
 		},
 		selectTestCase{
-			ds: bd.Order(C("a").Asc()).CompoundFromSelf(),
+			ds: bd.Order(pp.C("a").Asc()).CompoundFromSelf(),
 			clauses: exp.NewSelectClauses().
-				SetFrom(exp.NewColumnListExpression(bd.Order(C("a").Asc()).As("t1"))),
+				SetFrom(exp.NewColumnListExpression(bd.Order(pp.C("a").Asc()).As("t1"))),
 		},
 		selectTestCase{
 			ds: bd.As("alias").FromSelf(),
@@ -391,14 +392,14 @@ func (sds *selectDatasetSuite) TestCompoundFromSelf() {
 }
 
 func (sds *selectDatasetSuite) TestJoin() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.Join(T("foo"), On(C("a").IsNull())),
+			ds: bd.Join(pp.T("foo"), pp.On(pp.C("a").IsNull())),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
 				JoinsAppend(
-					exp.NewConditionedJoinExpression(exp.InnerJoinType, T("foo"), On(C("a").IsNull())),
+					exp.NewConditionedJoinExpression(exp.InnerJoinType, pp.T("foo"), pp.On(pp.C("a").IsNull())),
 				),
 		},
 		selectTestCase{
@@ -409,14 +410,14 @@ func (sds *selectDatasetSuite) TestJoin() {
 }
 
 func (sds *selectDatasetSuite) TestInnerJoin() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.InnerJoin(T("foo"), On(C("a").IsNull())),
+			ds: bd.InnerJoin(pp.T("foo"), pp.On(pp.C("a").IsNull())),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
 				JoinsAppend(
-					exp.NewConditionedJoinExpression(exp.InnerJoinType, T("foo"), On(C("a").IsNull())),
+					exp.NewConditionedJoinExpression(exp.InnerJoinType, pp.T("foo"), pp.On(pp.C("a").IsNull())),
 				),
 		},
 		selectTestCase{
@@ -427,14 +428,14 @@ func (sds *selectDatasetSuite) TestInnerJoin() {
 }
 
 func (sds *selectDatasetSuite) TestFullOuterJoin() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.FullOuterJoin(T("foo"), On(C("a").IsNull())),
+			ds: bd.FullOuterJoin(pp.T("foo"), pp.On(pp.C("a").IsNull())),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
 				JoinsAppend(
-					exp.NewConditionedJoinExpression(exp.FullOuterJoinType, T("foo"), On(C("a").IsNull())),
+					exp.NewConditionedJoinExpression(exp.FullOuterJoinType, pp.T("foo"), pp.On(pp.C("a").IsNull())),
 				),
 		},
 		selectTestCase{
@@ -445,14 +446,14 @@ func (sds *selectDatasetSuite) TestFullOuterJoin() {
 }
 
 func (sds *selectDatasetSuite) TestRightOuterJoin() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.RightOuterJoin(T("foo"), On(C("a").IsNull())),
+			ds: bd.RightOuterJoin(pp.T("foo"), pp.On(pp.C("a").IsNull())),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
 				JoinsAppend(
-					exp.NewConditionedJoinExpression(exp.RightOuterJoinType, T("foo"), On(C("a").IsNull())),
+					exp.NewConditionedJoinExpression(exp.RightOuterJoinType, pp.T("foo"), pp.On(pp.C("a").IsNull())),
 				),
 		},
 		selectTestCase{
@@ -463,14 +464,14 @@ func (sds *selectDatasetSuite) TestRightOuterJoin() {
 }
 
 func (sds *selectDatasetSuite) TestLeftOuterJoin() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.LeftOuterJoin(T("foo"), On(C("a").IsNull())),
+			ds: bd.LeftOuterJoin(pp.T("foo"), pp.On(pp.C("a").IsNull())),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
 				JoinsAppend(
-					exp.NewConditionedJoinExpression(exp.LeftOuterJoinType, T("foo"), On(C("a").IsNull())),
+					exp.NewConditionedJoinExpression(exp.LeftOuterJoinType, pp.T("foo"), pp.On(pp.C("a").IsNull())),
 				),
 		},
 		selectTestCase{
@@ -481,14 +482,14 @@ func (sds *selectDatasetSuite) TestLeftOuterJoin() {
 }
 
 func (sds *selectDatasetSuite) TestFullJoin() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.FullJoin(T("foo"), On(C("a").IsNull())),
+			ds: bd.FullJoin(pp.T("foo"), pp.On(pp.C("a").IsNull())),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
 				JoinsAppend(
-					exp.NewConditionedJoinExpression(exp.FullJoinType, T("foo"), On(C("a").IsNull())),
+					exp.NewConditionedJoinExpression(exp.FullJoinType, pp.T("foo"), pp.On(pp.C("a").IsNull())),
 				),
 		},
 		selectTestCase{
@@ -499,14 +500,14 @@ func (sds *selectDatasetSuite) TestFullJoin() {
 }
 
 func (sds *selectDatasetSuite) TestRightJoin() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.RightJoin(T("foo"), On(C("a").IsNull())),
+			ds: bd.RightJoin(pp.T("foo"), pp.On(pp.C("a").IsNull())),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
 				JoinsAppend(
-					exp.NewConditionedJoinExpression(exp.RightJoinType, T("foo"), On(C("a").IsNull())),
+					exp.NewConditionedJoinExpression(exp.RightJoinType, pp.T("foo"), pp.On(pp.C("a").IsNull())),
 				),
 		},
 		selectTestCase{
@@ -517,14 +518,14 @@ func (sds *selectDatasetSuite) TestRightJoin() {
 }
 
 func (sds *selectDatasetSuite) TestLeftJoin() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.LeftJoin(T("foo"), On(C("a").IsNull())),
+			ds: bd.LeftJoin(pp.T("foo"), pp.On(pp.C("a").IsNull())),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
 				JoinsAppend(
-					exp.NewConditionedJoinExpression(exp.LeftJoinType, T("foo"), On(C("a").IsNull())),
+					exp.NewConditionedJoinExpression(exp.LeftJoinType, pp.T("foo"), pp.On(pp.C("a").IsNull())),
 				),
 		},
 		selectTestCase{
@@ -535,14 +536,14 @@ func (sds *selectDatasetSuite) TestLeftJoin() {
 }
 
 func (sds *selectDatasetSuite) TestNaturalJoin() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.NaturalJoin(T("foo")),
+			ds: bd.NaturalJoin(pp.T("foo")),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
 				JoinsAppend(
-					exp.NewUnConditionedJoinExpression(exp.NaturalJoinType, T("foo")),
+					exp.NewUnConditionedJoinExpression(exp.NaturalJoinType, pp.T("foo")),
 				),
 		},
 		selectTestCase{
@@ -553,14 +554,14 @@ func (sds *selectDatasetSuite) TestNaturalJoin() {
 }
 
 func (sds *selectDatasetSuite) TestNaturalLeftJoin() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.NaturalLeftJoin(T("foo")),
+			ds: bd.NaturalLeftJoin(pp.T("foo")),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
 				JoinsAppend(
-					exp.NewUnConditionedJoinExpression(exp.NaturalLeftJoinType, T("foo")),
+					exp.NewUnConditionedJoinExpression(exp.NaturalLeftJoinType, pp.T("foo")),
 				),
 		},
 		selectTestCase{
@@ -571,14 +572,14 @@ func (sds *selectDatasetSuite) TestNaturalLeftJoin() {
 }
 
 func (sds *selectDatasetSuite) TestNaturalRightJoin() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.NaturalRightJoin(T("foo")),
+			ds: bd.NaturalRightJoin(pp.T("foo")),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
 				JoinsAppend(
-					exp.NewUnConditionedJoinExpression(exp.NaturalRightJoinType, T("foo")),
+					exp.NewUnConditionedJoinExpression(exp.NaturalRightJoinType, pp.T("foo")),
 				),
 		},
 		selectTestCase{
@@ -589,14 +590,14 @@ func (sds *selectDatasetSuite) TestNaturalRightJoin() {
 }
 
 func (sds *selectDatasetSuite) TestNaturalFullJoin() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.NaturalFullJoin(T("foo")),
+			ds: bd.NaturalFullJoin(pp.T("foo")),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
 				JoinsAppend(
-					exp.NewUnConditionedJoinExpression(exp.NaturalFullJoinType, T("foo")),
+					exp.NewUnConditionedJoinExpression(exp.NaturalFullJoinType, pp.T("foo")),
 				),
 		},
 		selectTestCase{
@@ -607,14 +608,14 @@ func (sds *selectDatasetSuite) TestNaturalFullJoin() {
 }
 
 func (sds *selectDatasetSuite) TestCrossJoin() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.CrossJoin(T("foo")),
+			ds: bd.CrossJoin(pp.T("foo")),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
 				JoinsAppend(
-					exp.NewUnConditionedJoinExpression(exp.CrossJoinType, T("foo")),
+					exp.NewUnConditionedJoinExpression(exp.CrossJoinType, pp.T("foo")),
 				),
 		},
 		selectTestCase{
@@ -625,9 +626,9 @@ func (sds *selectDatasetSuite) TestCrossJoin() {
 }
 
 func (sds *selectDatasetSuite) TestWhere() {
-	w := Ex{"a": 1}
-	w2 := Ex{"b": "c"}
-	bd := From("test")
+	w := pp.Ex{"a": 1}
+	w2 := pp.Ex{"b": "c"}
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.Where(w),
@@ -649,8 +650,8 @@ func (sds *selectDatasetSuite) TestWhere() {
 }
 
 func (sds *selectDatasetSuite) TestClearWhere() {
-	w := Ex{"a": 1}
-	bd := From("test").Where(w)
+	w := pp.Ex{"a": 1}
+	bd := pp.From("test").Where(w)
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.ClearWhere(),
@@ -665,25 +666,25 @@ func (sds *selectDatasetSuite) TestClearWhere() {
 }
 
 func (sds *selectDatasetSuite) TestForUpdate() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.ForUpdate(NoWait),
+			ds: bd.ForUpdate(pp.NoWait),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLock(exp.NewLock(exp.ForUpdate, NoWait)),
+				SetLock(exp.NewLock(exp.ForUpdate, pp.NoWait)),
 		},
 		selectTestCase{
-			ds: bd.ForUpdate(NoWait, T("table1")),
+			ds: bd.ForUpdate(pp.NoWait, pp.T("table1")),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLock(exp.NewLock(exp.ForUpdate, NoWait, T("table1"))),
+				SetLock(exp.NewLock(exp.ForUpdate, pp.NoWait, pp.T("table1"))),
 		},
 		selectTestCase{
-			ds: bd.ForUpdate(NoWait, T("table1"), T("table2")),
+			ds: bd.ForUpdate(pp.NoWait, pp.T("table1"), pp.T("table2")),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLock(exp.NewLock(exp.ForUpdate, NoWait, T("table1"), T("table2"))),
+				SetLock(exp.NewLock(exp.ForUpdate, pp.NoWait, pp.T("table1"), pp.T("table2"))),
 		},
 		selectTestCase{
 			ds:      bd,
@@ -693,25 +694,25 @@ func (sds *selectDatasetSuite) TestForUpdate() {
 }
 
 func (sds *selectDatasetSuite) TestForNoKeyUpdate() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.ForNoKeyUpdate(NoWait),
+			ds: bd.ForNoKeyUpdate(pp.NoWait),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLock(exp.NewLock(exp.ForNoKeyUpdate, NoWait)),
+				SetLock(exp.NewLock(exp.ForNoKeyUpdate, pp.NoWait)),
 		},
 		selectTestCase{
-			ds: bd.ForNoKeyUpdate(NoWait, T("table1")),
+			ds: bd.ForNoKeyUpdate(pp.NoWait, pp.T("table1")),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLock(exp.NewLock(exp.ForNoKeyUpdate, NoWait, T("table1"))),
+				SetLock(exp.NewLock(exp.ForNoKeyUpdate, pp.NoWait, pp.T("table1"))),
 		},
 		selectTestCase{
-			ds: bd.ForNoKeyUpdate(NoWait, T("table1"), T("table2")),
+			ds: bd.ForNoKeyUpdate(pp.NoWait, pp.T("table1"), pp.T("table2")),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLock(exp.NewLock(exp.ForNoKeyUpdate, NoWait, T("table1"), T("table2"))),
+				SetLock(exp.NewLock(exp.ForNoKeyUpdate, pp.NoWait, pp.T("table1"), pp.T("table2"))),
 		},
 		selectTestCase{
 			ds:      bd,
@@ -721,25 +722,25 @@ func (sds *selectDatasetSuite) TestForNoKeyUpdate() {
 }
 
 func (sds *selectDatasetSuite) TestForKeyShare() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.ForKeyShare(NoWait),
+			ds: bd.ForKeyShare(pp.NoWait),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLock(exp.NewLock(exp.ForKeyShare, NoWait)),
+				SetLock(exp.NewLock(exp.ForKeyShare, pp.NoWait)),
 		},
 		selectTestCase{
-			ds: bd.ForKeyShare(NoWait, T("table1")),
+			ds: bd.ForKeyShare(pp.NoWait, pp.T("table1")),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLock(exp.NewLock(exp.ForKeyShare, NoWait, T("table1"))),
+				SetLock(exp.NewLock(exp.ForKeyShare, pp.NoWait, pp.T("table1"))),
 		},
 		selectTestCase{
-			ds: bd.ForKeyShare(NoWait, T("table1"), T("table2")),
+			ds: bd.ForKeyShare(pp.NoWait, pp.T("table1"), pp.T("table2")),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLock(exp.NewLock(exp.ForKeyShare, NoWait, T("table1"), T("table2"))),
+				SetLock(exp.NewLock(exp.ForKeyShare, pp.NoWait, pp.T("table1"), pp.T("table2"))),
 		},
 		selectTestCase{
 			ds:      bd,
@@ -749,25 +750,25 @@ func (sds *selectDatasetSuite) TestForKeyShare() {
 }
 
 func (sds *selectDatasetSuite) TestForShare() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.ForShare(NoWait),
+			ds: bd.ForShare(pp.NoWait),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLock(exp.NewLock(exp.ForShare, NoWait)),
+				SetLock(exp.NewLock(exp.ForShare, pp.NoWait)),
 		},
 		selectTestCase{
-			ds: bd.ForShare(NoWait, T("table1")),
+			ds: bd.ForShare(pp.NoWait, pp.T("table1")),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLock(exp.NewLock(exp.ForShare, NoWait, T("table1"))),
+				SetLock(exp.NewLock(exp.ForShare, pp.NoWait, pp.T("table1"))),
 		},
 		selectTestCase{
-			ds: bd.ForShare(NoWait, T("table1"), T("table2")),
+			ds: bd.ForShare(pp.NoWait, pp.T("table1"), pp.T("table2")),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLock(exp.NewLock(exp.ForShare, NoWait, T("table1"), T("table2"))),
+				SetLock(exp.NewLock(exp.ForShare, pp.NoWait, pp.T("table1"), pp.T("table2"))),
 		},
 		selectTestCase{
 			ds:      bd,
@@ -777,7 +778,7 @@ func (sds *selectDatasetSuite) TestForShare() {
 }
 
 func (sds *selectDatasetSuite) TestGroupBy() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.GroupBy("a"),
@@ -799,10 +800,10 @@ func (sds *selectDatasetSuite) TestGroupBy() {
 }
 
 func (sds *selectDatasetSuite) TestWindow() {
-	w1 := W("w1").PartitionBy("a").OrderBy("b")
-	w2 := W("w2").PartitionBy("a").OrderBy("b")
+	w1 := pp.W("w1").PartitionBy("a").OrderBy("b")
+	w2 := pp.W("w2").PartitionBy("a").OrderBy("b")
 
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.Window(w1),
@@ -830,10 +831,10 @@ func (sds *selectDatasetSuite) TestWindow() {
 }
 
 func (sds *selectDatasetSuite) TestWindowAppend() {
-	w1 := W("w1").PartitionBy("a").OrderBy("b")
-	w2 := W("w2").PartitionBy("a").OrderBy("b")
+	w1 := pp.W("w1").PartitionBy("a").OrderBy("b")
+	w2 := pp.W("w2").PartitionBy("a").OrderBy("b")
 
-	bd := From("test").Window(w1)
+	bd := pp.From("test").Window(w1)
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.WindowAppend(w2),
@@ -851,9 +852,9 @@ func (sds *selectDatasetSuite) TestWindowAppend() {
 }
 
 func (sds *selectDatasetSuite) TestClearWindow() {
-	w1 := W("w1").PartitionBy("a").OrderBy("b")
+	w1 := pp.W("w1").PartitionBy("a").OrderBy("b")
 
-	bd := From("test").Window(w1)
+	bd := pp.From("test").Window(w1)
 	sds.assertCases(
 		selectTestCase{
 			ds:      bd.ClearWindow(),
@@ -869,19 +870,19 @@ func (sds *selectDatasetSuite) TestClearWindow() {
 }
 
 func (sds *selectDatasetSuite) TestHaving() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.Having(C("a").Gt(1)),
+			ds: bd.Having(pp.C("a").Gt(1)),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				HavingAppend(C("a").Gt(1)),
+				HavingAppend(pp.C("a").Gt(1)),
 		},
 		selectTestCase{
-			ds: bd.Having(C("a").Gt(1)).Having(Ex{"b": "c"}),
+			ds: bd.Having(pp.C("a").Gt(1)).Having(pp.Ex{"b": "c"}),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				HavingAppend(C("a").Gt(1)).HavingAppend(Ex{"b": "c"}),
+				HavingAppend(pp.C("a").Gt(1)).HavingAppend(pp.Ex{"b": "c"}),
 		},
 		selectTestCase{
 			ds:      bd,
@@ -891,19 +892,19 @@ func (sds *selectDatasetSuite) TestHaving() {
 }
 
 func (sds *selectDatasetSuite) TestOrder() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.Order(C("a").Asc()),
+			ds: bd.Order(pp.C("a").Asc()),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetOrder(C("a").Asc()),
+				SetOrder(pp.C("a").Asc()),
 		},
 		selectTestCase{
-			ds: bd.Order(C("a").Asc()).Order(C("b").Asc()),
+			ds: bd.Order(pp.C("a").Asc()).Order(pp.C("b").Asc()),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetOrder(C("b").Asc()),
+				SetOrder(pp.C("b").Asc()),
 		},
 		selectTestCase{
 			ds:      bd,
@@ -913,41 +914,41 @@ func (sds *selectDatasetSuite) TestOrder() {
 }
 
 func (sds *selectDatasetSuite) TestOrderAppend() {
-	bd := From("test").Order(C("a").Asc())
+	bd := pp.From("test").Order(pp.C("a").Asc())
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.OrderAppend(C("b").Asc()),
+			ds: bd.OrderAppend(pp.C("b").Asc()),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetOrder(C("a").Asc(), C("b").Asc()),
+				SetOrder(pp.C("a").Asc(), pp.C("b").Asc()),
 		},
 		selectTestCase{
 			ds: bd,
 			clauses: exp.NewSelectClauses().SetFrom(exp.NewColumnListExpression("test")).
-				SetOrder(C("a").Asc()),
+				SetOrder(pp.C("a").Asc()),
 		},
 	)
 }
 
 func (sds *selectDatasetSuite) TestOrderPrepend() {
-	bd := From("test").Order(C("a").Asc())
+	bd := pp.From("test").Order(pp.C("a").Asc())
 	sds.assertCases(
 		selectTestCase{
-			ds: bd.OrderPrepend(C("b").Asc()),
+			ds: bd.OrderPrepend(pp.C("b").Asc()),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetOrder(C("b").Asc(), C("a").Asc()),
+				SetOrder(pp.C("b").Asc(), pp.C("a").Asc()),
 		},
 		selectTestCase{
 			ds: bd,
 			clauses: exp.NewSelectClauses().SetFrom(exp.NewColumnListExpression("test")).
-				SetOrder(C("a").Asc()),
+				SetOrder(pp.C("a").Asc()),
 		},
 	)
 }
 
 func (sds *selectDatasetSuite) TestClearOrder() {
-	bd := From("test").Order(C("a").Asc())
+	bd := pp.From("test").Order(pp.C("a").Asc())
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.ClearOrder(),
@@ -957,13 +958,13 @@ func (sds *selectDatasetSuite) TestClearOrder() {
 		selectTestCase{
 			ds: bd,
 			clauses: exp.NewSelectClauses().SetFrom(exp.NewColumnListExpression("test")).
-				SetOrder(C("a").Asc()),
+				SetOrder(pp.C("a").Asc()),
 		},
 	)
 }
 
 func (sds *selectDatasetSuite) TestLimit() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.Limit(10),
@@ -995,19 +996,19 @@ func (sds *selectDatasetSuite) TestLimit() {
 }
 
 func (sds *selectDatasetSuite) TestLimitAll() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.LimitAll(),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLimit(L("ALL")),
+				SetLimit(pp.L("ALL")),
 		},
 		selectTestCase{
 			ds: bd.Limit(10).LimitAll(),
 			clauses: exp.NewSelectClauses().
 				SetFrom(exp.NewColumnListExpression("test")).
-				SetLimit(L("ALL")),
+				SetLimit(pp.L("ALL")),
 		},
 		selectTestCase{
 			ds:      bd,
@@ -1017,7 +1018,7 @@ func (sds *selectDatasetSuite) TestLimitAll() {
 }
 
 func (sds *selectDatasetSuite) TestClearLimit() {
-	bd := From("test").Limit(10)
+	bd := pp.From("test").Limit(10)
 	sds.assertCases(
 		selectTestCase{
 			ds:      bd.ClearLimit(),
@@ -1033,7 +1034,7 @@ func (sds *selectDatasetSuite) TestClearLimit() {
 }
 
 func (sds *selectDatasetSuite) TestOffset() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds:      bd.Offset(10),
@@ -1047,7 +1048,7 @@ func (sds *selectDatasetSuite) TestOffset() {
 }
 
 func (sds *selectDatasetSuite) TestClearOffset() {
-	bd := From("test").Offset(10)
+	bd := pp.From("test").Offset(10)
 	sds.assertCases(
 		selectTestCase{
 			ds:      bd.ClearOffset(),
@@ -1061,8 +1062,8 @@ func (sds *selectDatasetSuite) TestClearOffset() {
 }
 
 func (sds *selectDatasetSuite) TestUnion() {
-	uds := From("union_test")
-	bd := From("test")
+	uds := pp.From("union_test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.Union(uds),
@@ -1077,8 +1078,8 @@ func (sds *selectDatasetSuite) TestUnion() {
 }
 
 func (sds *selectDatasetSuite) TestUnionAll() {
-	uds := From("union_test")
-	bd := From("test")
+	uds := pp.From("union_test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.UnionAll(uds),
@@ -1093,8 +1094,8 @@ func (sds *selectDatasetSuite) TestUnionAll() {
 }
 
 func (sds *selectDatasetSuite) TestIntersect() {
-	uds := From("union_test")
-	bd := From("test")
+	uds := pp.From("union_test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.Intersect(uds),
@@ -1109,8 +1110,8 @@ func (sds *selectDatasetSuite) TestIntersect() {
 }
 
 func (sds *selectDatasetSuite) TestIntersectAll() {
-	uds := From("union_test")
-	bd := From("test")
+	uds := pp.From("union_test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.IntersectAll(uds),
@@ -1125,12 +1126,12 @@ func (sds *selectDatasetSuite) TestIntersectAll() {
 }
 
 func (sds *selectDatasetSuite) TestAs() {
-	bd := From("test")
+	bd := pp.From("test")
 	sds.assertCases(
 		selectTestCase{
 			ds: bd.As("t"),
 			clauses: exp.NewSelectClauses().SetFrom(exp.NewColumnListExpression("test")).
-				SetAlias(T("t")),
+				SetAlias(pp.T("t")),
 		},
 		selectTestCase{
 			ds:      bd,
@@ -1141,7 +1142,7 @@ func (sds *selectDatasetSuite) TestAs() {
 
 func (sds *selectDatasetSuite) TestBuild() {
 	md := new(mocks.SQLDialect)
-	ds := From("test").SetDialect(md)
+	ds := pp.From("test").SetDialect(md)
 	c := ds.GetClauses()
 	sqlB := builder.NewSQLBuilder(false)
 	md.On("ToSelectSQL", sqlB, c).Return(nil).Once()
@@ -1154,7 +1155,7 @@ func (sds *selectDatasetSuite) TestBuild() {
 
 func (sds *selectDatasetSuite) TestBuild_prepared() {
 	md := new(mocks.SQLDialect)
-	ds := From("test").Prepared(true).SetDialect(md)
+	ds := pp.From("test").Prepared(true).SetDialect(md)
 	c := ds.GetClauses()
 	sqlB := builder.NewSQLBuilder(true)
 	md.On("ToSelectSQL", sqlB, c).Return(nil).Once()
@@ -1167,7 +1168,7 @@ func (sds *selectDatasetSuite) TestBuild_prepared() {
 
 func (sds *selectDatasetSuite) TestBuild_ReturnedError() {
 	md := new(mocks.SQLDialect)
-	ds := From("test").SetDialect(md)
+	ds := pp.From("test").SetDialect(md)
 	c := ds.GetClauses()
 	sqlB := builder.NewSQLBuilder(false)
 	ee := errors.New("expected error")
@@ -1184,7 +1185,7 @@ func (sds *selectDatasetSuite) TestBuild_ReturnedError() {
 
 func (sds *selectDatasetSuite) TestAppendSQL() {
 	md := new(mocks.SQLDialect)
-	ds := From("test").SetDialect(md)
+	ds := pp.From("test").SetDialect(md)
 	c := ds.GetClauses()
 	sqlB := builder.NewSQLBuilder(false)
 	md.On("ToSelectSQL", sqlB, c).Return(nil).Once()
@@ -1215,7 +1216,7 @@ func (sds *selectDatasetSuite) TestScanStructs() {
 		WithArgs().
 		WillReturnRows(sqlmock.NewRows([]string{"test"}).FromCSVString("test1\ntest2"))
 
-	db := New("mock", mDB)
+	db := pp.New("mock", mDB)
 	var items []dsTestActionItem
 	sds.NoError(db.From("items").ScanStructs(&items))
 	sds.Equal([]dsTestActionItem{
@@ -1238,7 +1239,7 @@ func (sds *selectDatasetSuite) TestScanStructs() {
 	sds.EqualError(db.From("items").Select("test").ScanStructs(&items),
 		`pp: unable to find corresponding field to column "test" returned by query`)
 
-	sds.Equal(ErrQueryFactoryNotFoundError, From("items").ScanStructs(items))
+	sds.Equal(pp.ErrQueryFactoryNotFoundError, pp.From("items").ScanStructs(items))
 }
 
 func (sds *selectDatasetSuite) TestScanStructs_WithPreparedStatements() {
@@ -1264,9 +1265,9 @@ func (sds *selectDatasetSuite) TestScanStructs_WithPreparedStatements() {
 		WithArgs("111 Test Addr", "Bob", "Sally", "Billy").
 		WillReturnRows(sqlmock.NewRows([]string{"test"}).FromCSVString("test1\ntest2"))
 
-	db := New("mock", mDB)
+	db := pp.New("mock", mDB)
 	var items []dsTestActionItem
-	sds.NoError(db.From("items").Prepared(true).Where(Ex{
+	sds.NoError(db.From("items").Prepared(true).Where(pp.Ex{
 		"name":    []string{"Bob", "Sally", "Billy"},
 		"address": "111 Test Addr",
 	}).ScanStructs(&items))
@@ -1283,7 +1284,7 @@ func (sds *selectDatasetSuite) TestScanStructs_WithPreparedStatements() {
 	sds.EqualError(db.From("items").
 		Prepared(true).
 		Select("test").
-		Where(Ex{"name": []string{"Bob", "Sally", "Billy"}, "address": "111 Test Addr"}).
+		Where(pp.Ex{"name": []string{"Bob", "Sally", "Billy"}, "address": "111 Test Addr"}).
 		ScanStructs(&items), `pp: unable to find corresponding field to column "test" returned by query`)
 }
 
@@ -1302,7 +1303,7 @@ func (sds *selectDatasetSuite) TestScanStruct() {
 		WithArgs().
 		WillReturnRows(sqlmock.NewRows([]string{"test"}).FromCSVString("test1\ntest2"))
 
-	db := New("mock", mDB)
+	db := pp.New("mock", mDB)
 	var item dsTestActionItem
 	found, err := db.From("items").ScanStruct(&item)
 	sds.NoError(err)
@@ -1324,8 +1325,8 @@ func (sds *selectDatasetSuite) TestScanStruct() {
 	_, err = db.From("items").Select("test").ScanStruct(&item)
 	sds.EqualError(err, `pp: unable to find corresponding field to column "test" returned by query`)
 
-	_, err = From("items").ScanStruct(item)
-	sds.Equal(ErrQueryFactoryNotFoundError, err)
+	_, err = pp.From("items").ScanStruct(item)
+	sds.Equal(pp.ErrQueryFactoryNotFoundError, err)
 }
 
 func (sds *selectDatasetSuite) TestScanStruct_WithPreparedStatements() {
@@ -1341,9 +1342,9 @@ func (sds *selectDatasetSuite) TestScanStruct_WithPreparedStatements() {
 		WithArgs("111 Test Addr", "Bob", "Sally", "Billy", 1).
 		WillReturnRows(sqlmock.NewRows([]string{"test"}).FromCSVString("test1\ntest2"))
 
-	db := New("mock", mDB)
+	db := pp.New("mock", mDB)
 	var item dsTestActionItem
-	found, err := db.From("items").Prepared(true).Where(Ex{
+	found, err := db.From("items").Prepared(true).Where(pp.Ex{
 		"name":    []string{"Bob", "Sally", "Billy"},
 		"address": "111 Test Addr",
 	}).ScanStruct(&item)
@@ -1359,13 +1360,13 @@ func (sds *selectDatasetSuite) TestScanStruct_WithPreparedStatements() {
 	_, err = db.From("items").
 		Prepared(true).
 		Select("test").
-		Where(Ex{"name": []string{"Bob", "Sally", "Billy"}, "address": "111 Test Addr"}).
+		Where(pp.Ex{"name": []string{"Bob", "Sally", "Billy"}, "address": "111 Test Addr"}).
 		ScanStruct(&item)
 	sds.EqualError(err, `pp: unable to find corresponding field to column "test" returned by query`)
 }
 
 func (sds *selectDatasetSuite) TestScanStructUntagged() {
-	defer SetIgnoreUntaggedFields(false)
+	defer pp.SetIgnoreUntaggedFields(false)
 
 	mDB, sqlMock, err := sqlmock.New()
 	sds.NoError(err)
@@ -1377,7 +1378,7 @@ func (sds *selectDatasetSuite) TestScanStructUntagged() {
 		WithArgs().
 		WillReturnRows(sqlmock.NewRows([]string{"address", "name"}).FromCSVString("111 Test Addr,Test1"))
 
-	db := New("mock", mDB)
+	db := pp.New("mock", mDB)
 	var item dsUntaggedTestActionItem
 
 	found, err := db.From("items").ScanStruct(&item)
@@ -1388,7 +1389,7 @@ func (sds *selectDatasetSuite) TestScanStructUntagged() {
 	sds.Equal("Test2", item.Untagged)
 
 	// Ignore untagged fields, which will suppress the "untagged" column
-	SetIgnoreUntaggedFields(true)
+	pp.SetIgnoreUntaggedFields(true)
 
 	item = dsUntaggedTestActionItem{}
 	found, err = db.From("items").ScanStruct(&item)
@@ -1412,7 +1413,7 @@ func (sds *selectDatasetSuite) TestScanVals() {
 		WithArgs().
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).FromCSVString("1\n2\n3\n4\n5"))
 
-	db := New("mock", mDB)
+	db := pp.New("mock", mDB)
 	var ids []uint32
 	sds.NoError(db.From("items").Select("id").ScanVals(&ids))
 	sds.Equal(ids, []uint32{1, 2, 3, 4, 5})
@@ -1422,8 +1423,8 @@ func (sds *selectDatasetSuite) TestScanVals() {
 	sds.EqualError(db.From("items").ScanVals(dsTestActionItem{}),
 		"pp: type must be a pointer to a slice when scanning into vals")
 
-	err = From("items").ScanVals(&ids)
-	sds.Equal(ErrQueryFactoryNotFoundError, err)
+	err = pp.From("items").ScanVals(&ids)
+	sds.Equal(pp.ErrQueryFactoryNotFoundError, err)
 }
 
 func (sds *selectDatasetSuite) TestScanVals_WithPreparedStatment() {
@@ -1442,12 +1443,12 @@ func (sds *selectDatasetSuite) TestScanVals_WithPreparedStatment() {
 		WithArgs().
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).FromCSVString("1\n2\n3\n4\n5"))
 
-	db := New("mock", mDB)
+	db := pp.New("mock", mDB)
 	var ids []uint32
 	sds.NoError(db.From("items").
 		Prepared(true).
 		Select("id").
-		Where(Ex{"name": []string{"Bob", "Sally", "Billy"}, "address": "111 Test Addr"}).
+		Where(pp.Ex{"name": []string{"Bob", "Sally", "Billy"}, "address": "111 Test Addr"}).
 		ScanVals(&ids))
 	sds.Equal([]uint32{1, 2, 3, 4, 5}, ids)
 
@@ -1465,7 +1466,7 @@ func (sds *selectDatasetSuite) TestScanVal() {
 		WithArgs().
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).FromCSVString("10"))
 
-	db := New("mock", mDB)
+	db := pp.New("mock", mDB)
 	var id int64
 	found, err := db.From("items").Select("id").ScanVal(&id)
 	sds.NoError(err)
@@ -1479,8 +1480,8 @@ func (sds *selectDatasetSuite) TestScanVal() {
 	sds.False(found)
 	sds.EqualError(err, "pp: type must be a pointer when scanning into val")
 
-	_, err = From("items").ScanVal(&id)
-	sds.Equal(ErrQueryFactoryNotFoundError, err)
+	_, err = pp.From("items").ScanVal(&id)
+	sds.Equal(pp.ErrQueryFactoryNotFoundError, err)
 }
 
 func (sds *selectDatasetSuite) TestScanVal_WithPreparedStatement() {
@@ -1492,12 +1493,12 @@ func (sds *selectDatasetSuite) TestScanVal_WithPreparedStatement() {
 		WithArgs("111 Test Addr", "Bob", "Sally", "Billy", 1).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).FromCSVString("10"))
 
-	db := New("mock", mDB)
+	db := pp.New("mock", mDB)
 	var id int64
 	found, err := db.From("items").
 		Prepared(true).
 		Select("id").
-		Where(Ex{"name": []string{"Bob", "Sally", "Billy"}, "address": "111 Test Addr"}).
+		Where(pp.Ex{"name": []string{"Bob", "Sally", "Billy"}, "address": "111 Test Addr"}).
 		ScanVal(&id)
 	sds.NoError(err)
 	sds.Equal(int64(10), id)
@@ -1518,7 +1519,7 @@ func (sds *selectDatasetSuite) TestCount() {
 		WithArgs().
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).FromCSVString("10"))
 
-	db := New("mock", mDB)
+	db := pp.New("mock", mDB)
 	count, err := db.From("items").Count()
 	sds.NoError(err)
 	sds.Equal(count, int64(10))
@@ -1533,10 +1534,10 @@ func (sds *selectDatasetSuite) TestCount_WithPreparedStatement() {
 		WithArgs("111 Test Addr", "Bob", "Sally", "Billy", 1).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).FromCSVString("10"))
 
-	ds := New("mock", mDB)
+	ds := pp.New("mock", mDB)
 	count, err := ds.From("items").
 		Prepared(true).
-		Where(Ex{"name": []string{"Bob", "Sally", "Billy"}, "address": "111 Test Addr"}).
+		Where(pp.Ex{"name": []string{"Bob", "Sally", "Billy"}, "address": "111 Test Addr"}).
 		Count()
 	sds.NoError(err)
 	sds.Equal(int64(10), count)
@@ -1549,7 +1550,7 @@ func (sds *selectDatasetSuite) TestPluck() {
 		WithArgs().
 		WillReturnRows(sqlmock.NewRows([]string{"name"}).FromCSVString("test1\ntest2\ntest3\ntest4\ntest5"))
 
-	db := New("mock", mDB)
+	db := pp.New("mock", mDB)
 	var names []string
 	sds.NoError(db.From("items").Pluck(&names, "name"))
 	sds.Equal([]string{"test1", "test2", "test3", "test4", "test5"}, names)
@@ -1564,11 +1565,11 @@ func (sds *selectDatasetSuite) TestPluck_WithPreparedStatement() {
 		WithArgs("111 Test Addr", "Bob", "Sally", "Billy").
 		WillReturnRows(sqlmock.NewRows([]string{"name"}).FromCSVString("Bob\nSally\nBilly"))
 
-	db := New("mock", mDB)
+	db := pp.New("mock", mDB)
 	var names []string
 	sds.NoError(db.From("items").
 		Prepared(true).
-		Where(Ex{"name": []string{"Bob", "Sally", "Billy"}, "address": "111 Test Addr"}).
+		Where(pp.Ex{"name": []string{"Bob", "Sally", "Billy"}, "address": "111 Test Addr"}).
 		Pluck(&names, "name"))
 	sds.Equal([]string{"Bob", "Sally", "Billy"}, names)
 }
@@ -1580,7 +1581,7 @@ func (sds *selectDatasetSuite) TestSetError() {
 
 	// Verify initial error set/get works properly
 	md := new(mocks.SQLDialect)
-	ds := From("test").SetDialect(md)
+	ds := pp.From("test").SetDialect(md)
 	ds = ds.SetError(err1)
 	sds.Equal(err1, ds.Error())
 	sql, args, err := ds.Build()

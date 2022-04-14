@@ -1,19 +1,20 @@
 // nolint:lll // SQL statements are long
-package pp
+package pp_test
 
 import (
 	"database/sql"
 	"fmt"
+	"manlu.org/pp"
 	"time"
 
 	_ "manlu.org/pp/dialect/postgres"
 )
 
 func ExampleInsert_ppRecord() {
-	ds := Insert("user").Rows(
-		Record{"first_name": "Greg", "last_name": "Farley"},
-		Record{"first_name": "Jimmy", "last_name": "Stewart"},
-		Record{"first_name": "Jeff", "last_name": "Jeffers"},
+	ds := pp.Insert("user").Rows(
+		pp.Record{"first_name": "Greg", "last_name": "Farley"},
+		pp.Record{"first_name": "Jimmy", "last_name": "Stewart"},
+		pp.Record{"first_name": "Jeff", "last_name": "Jeffers"},
 	)
 	insertSQL, args, _ := ds.Build()
 	fmt.Println(insertSQL, args)
@@ -23,7 +24,7 @@ func ExampleInsert_ppRecord() {
 }
 
 func ExampleInsert_map() {
-	ds := Insert("user").Rows(
+	ds := pp.Insert("user").Rows(
 		map[string]interface{}{"first_name": "Greg", "last_name": "Farley"},
 		map[string]interface{}{"first_name": "Jimmy", "last_name": "Stewart"},
 		map[string]interface{}{"first_name": "Jeff", "last_name": "Jeffers"},
@@ -40,7 +41,7 @@ func ExampleInsert_struct() {
 		FirstName string `db:"first_name"`
 		LastName  string `db:"last_name"`
 	}
-	ds := Insert("user").Rows(
+	ds := pp.Insert("user").Rows(
 		User{FirstName: "Greg", LastName: "Farley"},
 		User{FirstName: "Jimmy", LastName: "Stewart"},
 		User{FirstName: "Jeff", LastName: "Jeffers"},
@@ -53,10 +54,10 @@ func ExampleInsert_struct() {
 }
 
 func ExampleInsert_prepared() {
-	ds := Insert("user").Prepared(true).Rows(
-		Record{"first_name": "Greg", "last_name": "Farley"},
-		Record{"first_name": "Jimmy", "last_name": "Stewart"},
-		Record{"first_name": "Jeff", "last_name": "Jeffers"},
+	ds := pp.Insert("user").Prepared(true).Rows(
+		pp.Record{"first_name": "Greg", "last_name": "Farley"},
+		pp.Record{"first_name": "Jimmy", "last_name": "Stewart"},
+		pp.Record{"first_name": "Jeff", "last_name": "Jeffers"},
 	)
 	insertSQL, args, _ := ds.Build()
 	fmt.Println(insertSQL, args)
@@ -66,8 +67,8 @@ func ExampleInsert_prepared() {
 }
 
 func ExampleInsert_fromQuery() {
-	ds := Insert("user").Prepared(true).
-		FromQuery(From("other_table"))
+	ds := pp.Insert("user").Prepared(true).
+		FromQuery(pp.From("other_table"))
 	insertSQL, args, _ := ds.Build()
 	fmt.Println(insertSQL, args)
 
@@ -76,9 +77,9 @@ func ExampleInsert_fromQuery() {
 }
 
 func ExampleInsert_fromQueryWithCols() {
-	ds := Insert("user").Prepared(true).
+	ds := pp.Insert("user").Prepared(true).
 		Cols("first_name", "last_name").
-		FromQuery(From("other_table").Select("fn", "ln"))
+		FromQuery(pp.From("other_table").Select("fn", "ln"))
 	insertSQL, args, _ := ds.Build()
 	fmt.Println(insertSQL, args)
 
@@ -87,12 +88,12 @@ func ExampleInsert_fromQueryWithCols() {
 }
 
 func ExampleInsert_colsAndVals() {
-	ds := Insert("user").
+	ds := pp.Insert("user").
 		Cols("first_name", "last_name").
 		Vals(
-			Vals{"Greg", "Farley"},
-			Vals{"Jimmy", "Stewart"},
-			Vals{"Jeff", "Jeffers"},
+			pp.Vals{"Greg", "Farley"},
+			pp.Vals{"Jimmy", "Stewart"},
+			pp.Vals{"Jeff", "Jeffers"},
 		)
 	insertSQL, args, _ := ds.Build()
 	fmt.Println(insertSQL, args)
@@ -104,7 +105,7 @@ func ExampleInsert_colsAndVals() {
 func ExampleInsertDataset_Executor_withRecord() {
 	db := getDB()
 	insert := db.Insert("pp_user").Rows(
-		Record{"first_name": "Jed", "last_name": "Riley", "created": time.Now()},
+		pp.Record{"first_name": "Jed", "last_name": "Riley", "created": time.Now()},
 	).Executor()
 	if _, err := insert.Exec(); err != nil {
 		fmt.Println(err.Error())
@@ -112,7 +113,7 @@ func ExampleInsertDataset_Executor_withRecord() {
 		fmt.Println("Inserted 1 user")
 	}
 
-	users := []Record{
+	users := []pp.Record{
 		{"first_name": "Greg", "last_name": "Farley", "created": time.Now()},
 		{"first_name": "Jimmy", "last_name": "Stewart", "created": time.Now()},
 		{"first_name": "Jeff", "last_name": "Jeffers", "created": time.Now()},
@@ -138,8 +139,8 @@ func ExampleInsertDataset_Executor_recordReturning() {
 		Created   time.Time     `db:"created"`
 	}
 
-	insert := db.Insert("pp_user").Returning(C("id")).Rows(
-		Record{"first_name": "Jed", "last_name": "Riley", "created": time.Now()},
+	insert := db.Insert("pp_user").Returning(pp.C("id")).Rows(
+		pp.Record{"first_name": "Jed", "last_name": "Riley", "created": time.Now()},
 	).Executor()
 	var id int64
 	if _, err := insert.ScanVal(&id); err != nil {
@@ -148,7 +149,7 @@ func ExampleInsertDataset_Executor_recordReturning() {
 		fmt.Printf("Inserted 1 user id:=%d\n", id)
 	}
 
-	insert = db.Insert("pp_user").Returning(Star()).Rows([]Record{
+	insert = db.Insert("pp_user").Returning(pp.Star()).Rows([]pp.Record{
 		{"first_name": "Greg", "last_name": "Farley", "created": time.Now()},
 		{"first_name": "Jimmy", "last_name": "Stewart", "created": time.Now()},
 		{"first_name": "Jeff", "last_name": "Jeffers", "created": time.Now()},
@@ -189,7 +190,7 @@ func ExampleInsertDataset_Executor_scanStructs() {
 		fmt.Printf("Inserted 1 user id:=%d\n", id)
 	}
 
-	insert = db.Insert("pp_user").Returning(Star()).Rows([]User{
+	insert = db.Insert("pp_user").Returning(pp.Star()).Rows([]User{
 		{FirstName: "Greg", LastName: "Farley", Created: time.Now()},
 		{FirstName: "Jimmy", LastName: "Stewart", Created: time.Now()},
 		{FirstName: "Jeff", LastName: "Jeffers", Created: time.Now()},
@@ -211,8 +212,8 @@ func ExampleInsertDataset_Executor_scanStructs() {
 }
 
 func ExampleInsertDataset_FromQuery() {
-	insertSQL, _, _ := Insert("test").
-		FromQuery(From("test2").Where(C("age").Gt(10))).
+	insertSQL, _, _ := pp.Insert("test").
+		FromQuery(pp.From("test2").Where(pp.C("age").Gt(10))).
 		Build()
 	fmt.Println(insertSQL)
 	// Output:
@@ -225,27 +226,27 @@ func ExampleInsertDataset_Build() {
 		Address string `db:"address"`
 		Name    string `db:"name"`
 	}
-	insertSQL, args, _ := Insert("items").Rows(
+	insertSQL, args, _ := pp.Insert("items").Rows(
 		item{Name: "Test1", Address: "111 Test Addr"},
 		item{Name: "Test2", Address: "112 Test Addr"},
 	).Build()
 	fmt.Println(insertSQL, args)
 
-	insertSQL, args, _ = Insert("items").Rows(
-		Record{"name": "Test1", "address": "111 Test Addr"},
-		Record{"name": "Test2", "address": "112 Test Addr"},
+	insertSQL, args, _ = pp.Insert("items").Rows(
+		pp.Record{"name": "Test1", "address": "111 Test Addr"},
+		pp.Record{"name": "Test2", "address": "112 Test Addr"},
 	).Build()
 	fmt.Println(insertSQL, args)
 
-	insertSQL, args, _ = Insert("items").Rows(
+	insertSQL, args, _ = pp.Insert("items").Rows(
 		[]item{
 			{Name: "Test1", Address: "111 Test Addr"},
 			{Name: "Test2", Address: "112 Test Addr"},
 		}).Build()
 	fmt.Println(insertSQL, args)
 
-	insertSQL, args, _ = From("items").Insert().Rows(
-		[]Record{
+	insertSQL, args, _ = pp.From("items").Insert().Rows(
+		[]pp.Record{
 			{"name": "Test1", "address": "111 Test Addr"},
 			{"name": "Test2", "address": "112 Test Addr"},
 		}).Build()
@@ -264,27 +265,27 @@ func ExampleInsertDataset_Prepared() {
 		Name    string `db:"name"`
 	}
 
-	insertSQL, args, _ := Insert("items").Prepared(true).Rows(
+	insertSQL, args, _ := pp.Insert("items").Prepared(true).Rows(
 		item{Name: "Test1", Address: "111 Test Addr"},
 		item{Name: "Test2", Address: "112 Test Addr"},
 	).Build()
 	fmt.Println(insertSQL, args)
 
-	insertSQL, args, _ = Insert("items").Prepared(true).Rows(
-		Record{"name": "Test1", "address": "111 Test Addr"},
-		Record{"name": "Test2", "address": "112 Test Addr"},
+	insertSQL, args, _ = pp.Insert("items").Prepared(true).Rows(
+		pp.Record{"name": "Test1", "address": "111 Test Addr"},
+		pp.Record{"name": "Test2", "address": "112 Test Addr"},
 	).Build()
 	fmt.Println(insertSQL, args)
 
-	insertSQL, args, _ = Insert("items").Prepared(true).Rows(
+	insertSQL, args, _ = pp.Insert("items").Prepared(true).Rows(
 		[]item{
 			{Name: "Test1", Address: "111 Test Addr"},
 			{Name: "Test2", Address: "112 Test Addr"},
 		}).Build()
 	fmt.Println(insertSQL, args)
 
-	insertSQL, args, _ = Insert("items").Prepared(true).Rows(
-		[]Record{
+	insertSQL, args, _ = pp.Insert("items").Prepared(true).Rows(
+		[]pp.Record{
 			{"name": "Test1", "address": "111 Test Addr"},
 			{"name": "Test2", "address": "112 Test Addr"},
 		}).Build()
@@ -302,7 +303,7 @@ func ExampleInsertDataset_ClearRows() {
 		Address string
 		Name    string
 	}
-	ds := Insert("items").Rows(
+	ds := pp.Insert("items").Rows(
 		item{Name: "Test1", Address: "111 Test Addr"},
 		item{Name: "Test2", Address: "112 Test Addr"},
 	)
@@ -319,7 +320,7 @@ func ExampleInsertDataset_Rows_withNoDbTag() {
 		Address string
 		Name    string
 	}
-	insertSQL, args, _ := Insert("items").
+	insertSQL, args, _ := pp.Insert("items").
 		Rows(
 			item{Name: "Test1", Address: "111 Test Addr"},
 			item{Name: "Test2", Address: "112 Test Addr"},
@@ -327,7 +328,7 @@ func ExampleInsertDataset_Rows_withNoDbTag() {
 		Build()
 	fmt.Println(insertSQL, args)
 
-	insertSQL, args, _ = Insert("items").
+	insertSQL, args, _ = pp.Insert("items").
 		Rows(
 			item{Name: "Test1", Address: "111 Test Addr"},
 			item{Name: "Test2", Address: "112 Test Addr"},
@@ -335,7 +336,7 @@ func ExampleInsertDataset_Rows_withNoDbTag() {
 		Build()
 	fmt.Println(insertSQL, args)
 
-	insertSQL, args, _ = Insert("items").
+	insertSQL, args, _ = pp.Insert("items").
 		Rows([]item{
 			{Name: "Test1", Address: "111 Test Addr"},
 			{Name: "Test2", Address: "112 Test Addr"},
@@ -349,13 +350,13 @@ func ExampleInsertDataset_Rows_withNoDbTag() {
 	// INSERT INTO "items" ("address", "name") VALUES ('111 Test Addr', 'Test1'), ('112 Test Addr', 'Test2') []
 }
 
-func ExampleInsertDataset_Rows_withPpSkipInsertTag() {
+func ExampleInsertDataset_Rows_withGoquSkipInsertTag() {
 	type item struct {
 		ID      uint32 `pp:"skipinsert"`
 		Address string
 		Name    string `pp:"skipinsert"`
 	}
-	insertSQL, args, _ := Insert("items").
+	insertSQL, args, _ := pp.Insert("items").
 		Rows(
 			item{Name: "Test1", Address: "111 Test Addr"},
 			item{Name: "Test2", Address: "112 Test Addr"},
@@ -363,7 +364,7 @@ func ExampleInsertDataset_Rows_withPpSkipInsertTag() {
 		Build()
 	fmt.Println(insertSQL, args)
 
-	insertSQL, args, _ = Insert("items").
+	insertSQL, args, _ = pp.Insert("items").
 		Rows([]item{
 			{Name: "Test1", Address: "111 Test Addr"},
 			{Name: "Test2", Address: "112 Test Addr"},
@@ -376,13 +377,13 @@ func ExampleInsertDataset_Rows_withPpSkipInsertTag() {
 	// INSERT INTO "items" ("address") VALUES ('111 Test Addr'), ('112 Test Addr') []
 }
 
-func ExampleInsertDataset_Rows_withPpDefaultIfEmptyTag() {
+func ExampleInsertDataset_Rows_withGoquDefaultIfEmptyTag() {
 	type item struct {
 		ID      uint32 `pp:"skipinsert"`
 		Address string
 		Name    string `pp:"defaultifempty"`
 	}
-	insertSQL, args, _ := Insert("items").
+	insertSQL, args, _ := pp.Insert("items").
 		Rows(
 			item{Name: "Test1", Address: "111 Test Addr"},
 			item{Address: "112 Test Addr"},
@@ -390,7 +391,7 @@ func ExampleInsertDataset_Rows_withPpDefaultIfEmptyTag() {
 		Build()
 	fmt.Println(insertSQL, args)
 
-	insertSQL, args, _ = Insert("items").
+	insertSQL, args, _ = pp.Insert("items").
 		Rows([]item{
 			{Address: "111 Test Addr"},
 			{Name: "Test2", Address: "112 Test Addr"},
@@ -413,7 +414,7 @@ func ExampleInsertDataset_Rows_withEmbeddedStruct() {
 		FirstName string
 		LastName  string
 	}
-	ds := Insert("user").Rows(
+	ds := pp.Insert("user").Rows(
 		User{Address: Address{Street: "111 Street", State: "NY"}, FirstName: "Greg", LastName: "Farley"},
 		User{Address: Address{Street: "211 Street", State: "NY"}, FirstName: "Jimmy", LastName: "Stewart"},
 		User{Address: Address{Street: "311 Street", State: "NY"}, FirstName: "Jeff", LastName: "Jeffers"},
@@ -435,7 +436,7 @@ func ExampleInsertDataset_Rows_withIgnoredEmbedded() {
 		FirstName string
 		LastName  string
 	}
-	ds := Insert("user").Rows(
+	ds := pp.Insert("user").Rows(
 		User{Address: Address{Street: "111 Street", State: "NY"}, FirstName: "Greg", LastName: "Farley"},
 		User{Address: Address{Street: "211 Street", State: "NY"}, FirstName: "Jimmy", LastName: "Stewart"},
 		User{Address: Address{Street: "311 Street", State: "NY"}, FirstName: "Jeff", LastName: "Jeffers"},
@@ -457,7 +458,7 @@ func ExampleInsertDataset_Rows_withNilEmbeddedPointer() {
 		FirstName string
 		LastName  string
 	}
-	ds := Insert("user").Rows(
+	ds := pp.Insert("user").Rows(
 		User{FirstName: "Greg", LastName: "Farley"},
 		User{FirstName: "Jimmy", LastName: "Stewart"},
 		User{FirstName: "Jeff", LastName: "Jeffers"},
@@ -475,7 +476,7 @@ func ExampleInsertDataset_ClearOnConflict() {
 		Address string `db:"address"`
 		Name    string `db:"name"`
 	}
-	ds := Insert("items").OnConflict(DoNothing())
+	ds := pp.Insert("items").OnConflict(pp.DoNothing())
 	insertSQL, args, _ := ds.ClearOnConflict().Rows(
 		item{Name: "Test1", Address: "111 Test Addr"},
 		item{Name: "Test2", Address: "112 Test Addr"},
@@ -492,10 +493,10 @@ func ExampleInsertDataset_OnConflict_doNothing() {
 		Address string `db:"address"`
 		Name    string `db:"name"`
 	}
-	insertSQL, args, _ := Insert("items").Rows(
+	insertSQL, args, _ := pp.Insert("items").Rows(
 		item{Name: "Test1", Address: "111 Test Addr"},
 		item{Name: "Test2", Address: "112 Test Addr"},
-	).OnConflict(DoNothing()).Build()
+	).OnConflict(pp.DoNothing()).Build()
 	fmt.Println(insertSQL, args)
 
 	// Output:
@@ -503,12 +504,12 @@ func ExampleInsertDataset_OnConflict_doNothing() {
 }
 
 func ExampleInsertDataset_OnConflict_doUpdate() {
-	insertSQL, args, _ := Insert("items").
+	insertSQL, args, _ := pp.Insert("items").
 		Rows(
-			Record{"name": "Test1", "address": "111 Test Addr"},
-			Record{"name": "Test2", "address": "112 Test Addr"},
+			pp.Record{"name": "Test1", "address": "111 Test Addr"},
+			pp.Record{"name": "Test2", "address": "112 Test Addr"},
 		).
-		OnConflict(DoUpdate("key", Record{"updated": L("NOW()")})).
+		OnConflict(pp.DoUpdate("key", pp.Record{"updated": pp.L("NOW()")})).
 		Build()
 	fmt.Println(insertSQL, args)
 
@@ -522,14 +523,14 @@ func ExampleInsertDataset_OnConflict_doUpdateWithWhere() {
 		Address string `db:"address"`
 		Name    string `db:"name"`
 	}
-	insertSQL, args, _ := Insert("items").
+	insertSQL, args, _ := pp.Insert("items").
 		Rows([]item{
 			{Name: "Test1", Address: "111 Test Addr"},
 			{Name: "Test2", Address: "112 Test Addr"},
 		}).
-		OnConflict(DoUpdate(
+		OnConflict(pp.DoUpdate(
 			"key",
-			Record{"updated": L("NOW()")}).Where(C("allow_update").IsTrue()),
+			pp.Record{"updated": pp.L("NOW()")}).Where(pp.C("allow_update").IsTrue()),
 		).
 		Build()
 	fmt.Println(insertSQL, args)
@@ -539,19 +540,19 @@ func ExampleInsertDataset_OnConflict_doUpdateWithWhere() {
 }
 
 func ExampleInsertDataset_Returning() {
-	insertSQL, _, _ := Insert("test").
+	insertSQL, _, _ := pp.Insert("test").
 		Returning("id").
-		Rows(Record{"a": "a", "b": "b"}).
+		Rows(pp.Record{"a": "a", "b": "b"}).
 		Build()
 	fmt.Println(insertSQL)
-	insertSQL, _, _ = Insert("test").
-		Returning(T("test").All()).
-		Rows(Record{"a": "a", "b": "b"}).
+	insertSQL, _, _ = pp.Insert("test").
+		Returning(pp.T("test").All()).
+		Rows(pp.Record{"a": "a", "b": "b"}).
 		Build()
 	fmt.Println(insertSQL)
-	insertSQL, _, _ = Insert("test").
+	insertSQL, _, _ = pp.Insert("test").
 		Returning("a", "b").
-		Rows(Record{"a": "a", "b": "b"}).
+		Rows(pp.Record{"a": "a", "b": "b"}).
 		Build()
 	fmt.Println(insertSQL)
 	// Output:
@@ -561,9 +562,9 @@ func ExampleInsertDataset_Returning() {
 }
 
 func ExampleInsertDataset_With() {
-	insertSQL, _, _ := Insert("foo").
-		With("other", From("bar").Where(C("id").Gt(10))).
-		FromQuery(From("other")).
+	insertSQL, _, _ := pp.Insert("foo").
+		With("other", pp.From("bar").Where(pp.C("id").Gt(10))).
+		FromQuery(pp.From("other")).
 		Build()
 	fmt.Println(insertSQL)
 
@@ -572,13 +573,13 @@ func ExampleInsertDataset_With() {
 }
 
 func ExampleInsertDataset_WithRecursive() {
-	insertSQL, _, _ := Insert("num_count").
+	insertSQL, _, _ := pp.Insert("num_count").
 		WithRecursive("nums(x)",
-			From().Select(L("1")).
-				UnionAll(From("nums").
-					Select(L("x+1")).Where(C("x").Lt(5))),
+			pp.From().Select(pp.L("1")).
+				UnionAll(pp.From("nums").
+					Select(pp.L("x+1")).Where(pp.C("x").Lt(5))),
 		).
-		FromQuery(From("nums")).
+		FromQuery(pp.From("nums")).
 		Build()
 	fmt.Println(insertSQL)
 	// Output:
@@ -586,18 +587,18 @@ func ExampleInsertDataset_WithRecursive() {
 }
 
 func ExampleInsertDataset_Into() {
-	ds := Insert("test")
-	insertSQL, _, _ := ds.Into("test2").Rows(Record{"first_name": "bob", "last_name": "yukon"}).Build()
+	ds := pp.Insert("test")
+	insertSQL, _, _ := ds.Into("test2").Rows(pp.Record{"first_name": "bob", "last_name": "yukon"}).Build()
 	fmt.Println(insertSQL)
 	// Output:
 	// INSERT INTO "test2" ("first_name", "last_name") VALUES ('bob', 'yukon')
 }
 
 func ExampleInsertDataset_Into_aliased() {
-	ds := Insert("test")
+	ds := pp.Insert("test")
 	insertSQL, _, _ := ds.
-		Into(T("test").As("t")).
-		Rows(Record{"first_name": "bob", "last_name": "yukon"}).
+		Into(pp.T("test").As("t")).
+		Rows(pp.Record{"first_name": "bob", "last_name": "yukon"}).
 		Build()
 	fmt.Println(insertSQL)
 	// Output:
@@ -605,7 +606,7 @@ func ExampleInsertDataset_Into_aliased() {
 }
 
 func ExampleInsertDataset_Cols() {
-	insertSQL, _, _ := Insert("test").
+	insertSQL, _, _ := pp.Insert("test").
 		Cols("a", "b", "c").
 		Vals(
 			[]interface{}{"a1", "b1", "c1"},
@@ -619,9 +620,9 @@ func ExampleInsertDataset_Cols() {
 }
 
 func ExampleInsertDataset_Cols_withFromQuery() {
-	insertSQL, _, _ := Insert("test").
+	insertSQL, _, _ := pp.Insert("test").
 		Cols("a", "b", "c").
-		FromQuery(From("foo").Select("d", "e", "f")).
+		FromQuery(pp.From("foo").Select("d", "e", "f")).
 		Build()
 	fmt.Println(insertSQL)
 	// Output:
@@ -629,7 +630,7 @@ func ExampleInsertDataset_Cols_withFromQuery() {
 }
 
 func ExampleInsertDataset_ColsAppend() {
-	insertSQL, _, _ := Insert("test").
+	insertSQL, _, _ := pp.Insert("test").
 		Cols("a", "b").
 		ColsAppend("c").
 		Vals(
@@ -644,9 +645,9 @@ func ExampleInsertDataset_ColsAppend() {
 }
 
 func ExampleInsertDataset_ClearCols() {
-	ds := Insert("test").Cols("a", "b", "c")
+	ds := pp.Insert("test").Cols("a", "b", "c")
 	insertSQL, _, _ := ds.ClearCols().Cols("other_a", "other_b", "other_c").
-		FromQuery(From("foo").Select("d", "e", "f")).
+		FromQuery(pp.From("foo").Select("d", "e", "f")).
 		Build()
 	fmt.Println(insertSQL)
 	// Output:
@@ -654,7 +655,7 @@ func ExampleInsertDataset_ClearCols() {
 }
 
 func ExampleInsertDataset_Vals() {
-	insertSQL, _, _ := Insert("test").
+	insertSQL, _, _ := pp.Insert("test").
 		Cols("a", "b", "c").
 		Vals(
 			[]interface{}{"a1", "b1", "c1"},
@@ -664,7 +665,7 @@ func ExampleInsertDataset_Vals() {
 		Build()
 	fmt.Println(insertSQL)
 
-	insertSQL, _, _ = Insert("test").
+	insertSQL, _, _ = pp.Insert("test").
 		Cols("a", "b", "c").
 		Vals([]interface{}{"a1", "b1", "c1"}).
 		Vals([]interface{}{"a2", "b2", "c2"}).
@@ -678,7 +679,7 @@ func ExampleInsertDataset_Vals() {
 }
 
 func ExampleInsertDataset_ClearVals() {
-	insertSQL, _, _ := Insert("test").
+	insertSQL, _, _ := pp.Insert("test").
 		Cols("a", "b", "c").
 		Vals(
 			[]interface{}{"a1", "b1", "c1"},
@@ -689,7 +690,7 @@ func ExampleInsertDataset_ClearVals() {
 		Build()
 	fmt.Println(insertSQL)
 
-	insertSQL, _, _ = Insert("test").
+	insertSQL, _, _ = pp.Insert("test").
 		Cols("a", "b", "c").
 		Vals([]interface{}{"a1", "b1", "c1"}).
 		Vals([]interface{}{"a2", "b2", "c2"}).
