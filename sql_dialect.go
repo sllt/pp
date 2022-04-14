@@ -22,7 +22,7 @@ type (
 	}
 	// The default adapter. This class should be used when building a new adapter. When creating a new adapter you can
 	// either override methods, or more typically update default values.
-	// See (github.com/doug-martin/pp/dialect/postgres)
+	// See (manlu.org/pp/dialect/postgres)
 	sqlDialect struct {
 		dialect        string
 		dialectOptions *SQLDialectOptions
@@ -38,10 +38,15 @@ var (
 	dialects              = make(map[string]SQLDialect)
 	DefaultDialectOptions = gen.DefaultDialectOptions
 	dialectsMu            sync.RWMutex
+	defaultDialect        = "default"
 )
 
 func init() {
 	RegisterDialect("default", DefaultDialectOptions())
+}
+
+func SetDefaultDialect(dialect string) {
+	defaultDialect = dialect
 }
 
 func RegisterDialect(name string, do *SQLDialectOptions) {

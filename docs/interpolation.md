@@ -1,6 +1,6 @@
 # Prepared Statements
 
-By default the `pp` will interpolate all parameters, if you do not want to have values interpolated you can use the [`Prepared`](http://godoc.org/github.com/doug-martin/pp#SelectDataset.Prepared) method to prevent this.
+By default the `pp` will interpolate all parameters, if you do not want to have values interpolated you can use the [`Prepared`](http://godoc.org/manlu.org/pp#SelectDataset.Prepared) method to prevent this.
 
 **Note** For the examples all placeholders are `?` this will be dialect specific when using other examples (e.g. Postgres `$1, $2...`)
 

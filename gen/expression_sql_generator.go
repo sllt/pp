@@ -22,7 +22,7 @@ type (
 	}
 	// The default adapter. This class should be used when building a new adapter. When creating a new adapter you can
 	// either override methods, or more typically update default values.
-	// See (github.com/doug-martin/pp/dialect/postgres)
+	// See (manlu.org/pp/dialect/postgres)
 	expressionSQLGenerator struct {
 		dialect        string
 		dialectOptions *SQLDialectOptions
