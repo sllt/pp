@@ -61,6 +61,7 @@ func DialectOptions() *pp.SQLDialectOptions {
 	opts.EscapedRunes = map[rune][]byte{
 		'\'': []byte("''"),
 	}
+	opts.TruncateClause = []byte("DELETE FROM")
 	opts.InsertIgnoreClause = []byte("INSERT OR IGNORE INTO ")
 	opts.ConflictFragment = []byte(" ON CONFLICT ")
 	opts.ConflictDoUpdateFragment = []byte(" DO UPDATE SET ")
