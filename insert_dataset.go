@@ -31,7 +31,7 @@ func newInsertDataset(d string, queryFactory exec.QueryFactory) *InsertDataset {
 // Creates a new InsertDataset for the provided table. Using this method will only allow you
 // to create SQL user Database#From to create an InsertDataset with query capabilities
 func Insert(table interface{}) *InsertDataset {
-	return newInsertDataset("default", nil).Into(table)
+	return newInsertDataset(defaultDialect, nil).Into(table)
 }
 
 // Set the parameter interpolation behavior. See examples
