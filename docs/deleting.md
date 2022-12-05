@@ -54,7 +54,7 @@ DELETE FROM "table" WHERE "foo"='bar'
 Use this when you want to create SQL for a specific `dialect`
 
 ```go
-// import _ "manlu.org/pp/dialect/mysql"
+// import _ "github.com/sllt/pp/dialect/mysql"
 
 dialect := pp.Dialect("mysql")
 
@@ -71,7 +71,7 @@ DELETE FROM `table`
 Use this when you want to execute the SQL or create SQL for the drivers dialect.
 
 ```go
-// import _ "manlu.org/pp/dialect/mysql"
+// import _ "github.com/sllt/pp/dialect/mysql"
 
 mysqlDB := //initialize your db
 db := pp.New("mysql", mysqlDB)
@@ -145,7 +145,7 @@ DELETE FROM "test" WHERE (("a" > 10) AND ("b" < 10) AND ("c" IS NULL) AND ("d" I
 **NOTE** This will only work if your dialect supports it
 
 ```go
-// import _ "manlu.org/pp/dialect/mysql"
+// import _ "github.com/sllt/pp/dialect/mysql"
 
 ds := pp.Dialect("mysql").Delete("test").Order(pp.C("a").Asc())
 sql, _, _ := ds.Build()
@@ -163,7 +163,7 @@ DELETE FROM `test` ORDER BY `a` ASC
 **NOTE** This will only work if your dialect supports it
 
 ```go
-// import _ "manlu.org/pp/dialect/mysql"
+// import _ "github.com/sllt/pp/dialect/mysql"
 
 ds := pp.Dialect("mysql").Delete("test").Limit(10)
 sql, _, _ := ds.Build()

@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"reflect"
 
-	"manlu.org/pp/exp"
-	"manlu.org/pp/internal/errors"
-	"manlu.org/pp/internal/util"
+	"github.com/sllt/pp/exp"
+	"github.com/sllt/pp/internal/errors"
+	"github.com/sllt/pp/internal/util"
 )
 
 type (

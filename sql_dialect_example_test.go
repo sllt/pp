@@ -2,7 +2,7 @@ package pp_test
 
 import (
 	"fmt"
-	"manlu.org/pp"
+	"github.com/sllt/pp"
 )
 
 func ExampleRegisterDialect() {

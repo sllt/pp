@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"manlu.org/pp"
+	"github.com/sllt/pp"
 
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/suite"

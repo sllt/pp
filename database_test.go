@@ -3,13 +3,13 @@ package pp_test
 import (
 	"context"
 	"fmt"
-	"manlu.org/pp"
+	"github.com/sllt/pp"
 	"sync"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/sllt/pp/internal/errors"
 	"github.com/stretchr/testify/suite"
-	"manlu.org/pp/internal/errors"
 )
 
 type testActionItem struct {

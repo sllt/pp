@@ -1,7 +1,7 @@
 package exp
 
 import (
-	"manlu.org/pp/internal/errors"
+	"github.com/sllt/pp/internal/errors"
 	"sort"
 	"strings"
 )

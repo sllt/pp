@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"manlu.org/pp"
+	"github.com/sllt/pp"
 )
 
 func DialectOptions() *pp.SQLDialectOptions {

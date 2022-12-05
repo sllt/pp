@@ -1,8 +1,8 @@
 package gen
 
 import (
+	"github.com/sllt/pp/internal/builder"
 	"github.com/stretchr/testify/suite"
-	"manlu.org/pp/internal/builder"
 )
 
 type baseSQLGeneratorSuite struct {

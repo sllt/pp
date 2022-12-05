@@ -2,9 +2,9 @@ package pp_test
 
 import (
 	"fmt"
-	"manlu.org/pp"
+	"github.com/sllt/pp"
 
-	_ "manlu.org/pp/dialect/mysql"
+	_ "github.com/sllt/pp/dialect/mysql"
 )
 
 func ExampleDelete() {

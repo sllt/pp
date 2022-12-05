@@ -1,9 +1,9 @@
 package gen
 
 import (
-	"manlu.org/pp/exp"
-	"manlu.org/pp/internal/builder"
-	"manlu.org/pp/internal/errors"
+	"github.com/sllt/pp/exp"
+	"github.com/sllt/pp/internal/builder"
+	"github.com/sllt/pp/internal/errors"
 )
 
 var ErrNoUpdatedValuesProvided = errors.New("no update values provided")

@@ -49,7 +49,7 @@ SELECT NOW()
 Use this when you want to create SQL for a specific `dialect`
 
 ```go
-// import _ "manlu.org/pp/dialect/mysql"
+// import _ "github.com/sllt/pp/dialect/mysql"
 
 dialect := pp.Dialect("mysql")
 
@@ -70,7 +70,7 @@ SELECT NOW()
 Use this when you want to execute the SQL or create SQL for the drivers dialect.
 
 ```go
-// import _ "manlu.org/pp/dialect/mysql"
+// import _ "github.com/sllt/pp/dialect/mysql"
 
 mysqlDB := //initialize your db
 db := pp.New("mysql", mysqlDB)

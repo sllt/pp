@@ -4,10 +4,10 @@ package pp_test
 import (
 	"database/sql"
 	"fmt"
-	"manlu.org/pp"
+	"github.com/sllt/pp"
 	"time"
 
-	_ "manlu.org/pp/dialect/postgres"
+	_ "github.com/sllt/pp/dialect/postgres"
 )
 
 func ExampleInsert_ppRecord() {

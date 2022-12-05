@@ -1,8 +1,8 @@
 package mysql
 
 import (
-	"manlu.org/pp"
-	"manlu.org/pp/exp"
+	"github.com/sllt/pp"
+	"github.com/sllt/pp/exp"
 )
 
 func DialectOptions() *pp.SQLDialectOptions {

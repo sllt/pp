@@ -3,9 +3,9 @@ package gen
 import (
 	"testing"
 
+	"github.com/sllt/pp/exp"
+	"github.com/sllt/pp/internal/builder"
 	"github.com/stretchr/testify/suite"
-	"manlu.org/pp/exp"
-	"manlu.org/pp/internal/builder"
 )
 
 type (

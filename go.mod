@@ -1,4 +1,4 @@
-module manlu.org/pp
+module github.com/sllt/pp
 
 go 1.17
 

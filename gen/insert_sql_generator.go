@@ -3,9 +3,9 @@ package gen
 import (
 	"strings"
 
-	"manlu.org/pp/exp"
-	"manlu.org/pp/internal/builder"
-	"manlu.org/pp/internal/errors"
+	"github.com/sllt/pp/exp"
+	"github.com/sllt/pp/internal/builder"
+	"github.com/sllt/pp/internal/errors"
 )
 
 type (
@@ -17,7 +17,7 @@ type (
 	}
 	// The default adapter. This class should be used when building a new adapter. When creating a new adapter you can
 	// either override methods, or more typically update default values.
-	// See (manlu.org/pp/dialect/postgres)
+	// See (github.com/sllt/pp/dialect/postgres)
 	insertSQLGenerator struct {
 		CommonSQLGenerator
 	}

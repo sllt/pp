@@ -10,9 +10,9 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/sllt/pp"
+	"github.com/sllt/pp/dialect/mysql"
 	"github.com/stretchr/testify/suite"
-	"manlu.org/pp"
-	"manlu.org/pp/dialect/mysql"
 )
 
 const (

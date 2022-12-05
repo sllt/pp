@@ -1,10 +1,10 @@
 package pp
 
 import (
-	"manlu.org/pp/internal/util"
+	"github.com/sllt/pp/internal/util"
 	"time"
 
-	"manlu.org/pp/gen"
+	"github.com/sllt/pp/gen"
 )
 
 type DialectWrapper struct {

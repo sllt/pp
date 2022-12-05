@@ -1,11 +1,11 @@
 package gen
 
 import (
-	"manlu.org/pp/internal/builder"
-	"manlu.org/pp/internal/errors"
+	"github.com/sllt/pp/internal/builder"
+	"github.com/sllt/pp/internal/errors"
 	"testing"
 
-	"manlu.org/pp/exp"
+	"github.com/sllt/pp/exp"
 
 	"github.com/stretchr/testify/suite"
 )

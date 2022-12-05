@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sllt/pp/exp"
+	"github.com/sllt/pp/internal/builder"
+	"github.com/sllt/pp/internal/errors"
 	"github.com/stretchr/testify/suite"
-	"manlu.org/pp/exp"
-	"manlu.org/pp/internal/builder"
-	"manlu.org/pp/internal/errors"
 )
 
 var emptyArgs = make([]interface{}, 0)

@@ -2,10 +2,10 @@
 
 Dialects allow pp the build the correct SQL for each database. There are four dialects that come packaged with `pp`
 
-* [mysql](./dialect/mysql/mysql.go) - `import _ "manlu.org/pp/dialect/mysql"`
-* [postgres](./dialect/postgres/postgres.go) - `import _ "manlu.org/pp/dialect/postgres"`
-* [sqlite3](./dialect/sqlite3/sqlite3.go) - `import _ "manlu.org/pp/dialect/sqlite3"`
-* [sqlserver](./dialect/sqlserver/sqlserver.go) - `import _ "manlu.org/pp/dialect/sqlserver"`
+* [mysql](./dialect/mysql/mysql.go) - `import _ "github.com/sllt/pp/dialect/mysql"`
+* [postgres](./dialect/postgres/postgres.go) - `import _ "github.com/sllt/pp/dialect/postgres"`
+* [sqlite3](./dialect/sqlite3/sqlite3.go) - `import _ "github.com/sllt/pp/dialect/sqlite3"`
+* [sqlserver](./dialect/sqlserver/sqlserver.go) - `import _ "github.com/sllt/pp/dialect/sqlserver"`
 
 **NOTE** Dialects work like drivers in go where they are not registered until you import the package.
 
@@ -16,9 +16,9 @@ Below are examples for each dialect. Notice how the dialect is imported and then
 ```go
 import (
   "fmt"
-  "manlu.org/pp"
+  "github.com/sllt/pp"
   // import the dialect
-  _ "manlu.org/pp/dialect/postgres"
+  _ "github.com/sllt/pp/dialect/postgres"
 )
 
 // look up the dialect
@@ -44,9 +44,9 @@ SELECT * FROM "test" WHERE "id" = 10 []
 ```go
 import (
   "fmt"
-  "manlu.org/pp"
+  "github.com/sllt/pp"
   // import the dialect
-  _ "manlu.org/pp/dialect/mysql"
+  _ "github.com/sllt/pp/dialect/mysql"
 )
 
 // look up the dialect
@@ -72,9 +72,9 @@ SELECT * FROM `test` WHERE `id` = 10 []
 ```go
 import (
   "fmt"
-  "manlu.org/pp"
+  "github.com/sllt/pp"
   // import the dialect
-  _ "manlu.org/pp/dialect/sqlite3"
+  _ "github.com/sllt/pp/dialect/sqlite3"
 )
 
 // look up the dialect
@@ -100,9 +100,9 @@ SELECT * FROM `test` WHERE `id` = 10 []
 ```go
 import (
   "fmt"
-  "manlu.org/pp"
+  "github.com/sllt/pp"
   // import the dialect
-  _ "manlu.org/pp/dialect/sqlserver"
+  _ "github.com/sllt/pp/dialect/sqlserver"
 )
 
 // look up the dialect
@@ -132,8 +132,8 @@ In the example below notice that we imported the dialect and driver for side eff
 ```go
 import (
   "database/sql"
-  "manlu.org/pp"
-  _ "manlu.org/pp/dialect/postgres"
+  "github.com/sllt/pp"
+  _ "github.com/sllt/pp/dialect/postgres"
   _ "github.com/lib/pq"
 )
 
@@ -160,15 +160,15 @@ Dialects in pp are the foundation of building the correct SQL for each DB dialec
 
 ### Dialect Options
 
-Most SQL dialects share a majority of their syntax, for this reason `pp` has a [default set of dialect options]((http://godoc.org/manlu.org/pp/#DefaultDialectOptions)) that can be used as a base for any new Dialect.
+Most SQL dialects share a majority of their syntax, for this reason `pp` has a [default set of dialect options]((http://godoc.org/github.com/sllt/pp/#DefaultDialectOptions)) that can be used as a base for any new Dialect.
 
-When creating a new `SQLDialect` you just need to override the default values that are documented in [`SQLDialectOptions`](http://godoc.org/manlu.org/pp/#SQLDialectOptions).
+When creating a new `SQLDialect` you just need to override the default values that are documented in [`SQLDialectOptions`](http://godoc.org/github.com/sllt/pp/#SQLDialectOptions).
 
 Take a look at [`postgres`](./dialect/postgres/postgres.go), [`mysql`](./dialect/mysql/mysql.go) and [`sqlite3`](./dialect/sqlite3/sqlite3.go) for examples.
 
 ### Creating a custom dialect
 
-When creating a new dialect you must register it using [`RegisterDialect`](http://godoc.org/manlu.org/pp/#RegisterDialect). This method requires 2 arguments.
+When creating a new dialect you must register it using [`RegisterDialect`](http://godoc.org/github.com/sllt/pp/#RegisterDialect). This method requires 2 arguments.
 
 1. `dialect string` - The name of your dialect
 2. `opts SQLDialectOptions` - The custom options for your dialect

@@ -3,9 +3,9 @@ package sqlserver_test
 import (
 	"testing"
 
+	"github.com/sllt/pp"
+	"github.com/sllt/pp/exp"
 	"github.com/stretchr/testify/suite"
-	"manlu.org/pp"
-	"manlu.org/pp/exp"
 )
 
 type (

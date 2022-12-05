@@ -3,8 +3,8 @@
 package mocks
 
 import (
-	exp "manlu.org/pp/exp"
-	builder "manlu.org/pp/internal/builder"
+	exp "github.com/sllt/pp/exp"
+	builder "github.com/sllt/pp/internal/builder"
 
 	mock "github.com/stretchr/testify/mock"
 )

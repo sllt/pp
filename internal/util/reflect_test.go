@@ -2,8 +2,8 @@ package util_test
 
 import (
 	"database/sql"
+	"github.com/sllt/pp/internal/util"
 	"github.com/stretchr/testify/suite"
-	"manlu.org/pp/internal/util"
 	"reflect"
 	"strings"
 	"sync"

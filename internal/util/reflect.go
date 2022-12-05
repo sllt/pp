@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"manlu.org/pp/internal/errors"
+	"github.com/sllt/pp/internal/errors"
 )
 
 const (

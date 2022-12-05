@@ -1,16 +1,16 @@
 package pp_test
 
 import (
-	"manlu.org/pp"
+	"github.com/sllt/pp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/sllt/pp/exp"
+	"github.com/sllt/pp/internal/builder"
+	"github.com/sllt/pp/internal/errors"
+	"github.com/sllt/pp/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"manlu.org/pp/exp"
-	"manlu.org/pp/internal/builder"
-	"manlu.org/pp/internal/errors"
-	"manlu.org/pp/mocks"
 )
 
 type (

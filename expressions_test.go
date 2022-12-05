@@ -1,11 +1,11 @@
 package pp_test
 
 import (
-	"manlu.org/pp"
+	"github.com/sllt/pp"
 	"testing"
 
+	"github.com/sllt/pp/exp"
 	"github.com/stretchr/testify/suite"
-	"manlu.org/pp/exp"
 )
 
 type (

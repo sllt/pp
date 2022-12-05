@@ -3,10 +3,10 @@ package pp_test
 
 import (
 	"fmt"
-	"manlu.org/pp"
+	"github.com/sllt/pp"
 	"regexp"
 
-	"manlu.org/pp/exp"
+	"github.com/sllt/pp/exp"
 )
 
 func ExampleAVG() {

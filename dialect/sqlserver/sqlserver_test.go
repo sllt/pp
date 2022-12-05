@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"manlu.org/pp/dialect/mysql"
+	"github.com/sllt/pp/dialect/mysql"
 
 	_ "github.com/denisenkom/go-mssqldb"
+	"github.com/sllt/pp"
+	_ "github.com/sllt/pp/dialect/sqlserver"
 	"github.com/stretchr/testify/suite"
-	"manlu.org/pp"
-	_ "manlu.org/pp/dialect/sqlserver"
 )
 
 const (

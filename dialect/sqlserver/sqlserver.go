@@ -1,9 +1,9 @@
 package sqlserver
 
 import (
-	"manlu.org/pp"
-	"manlu.org/pp/exp"
-	"manlu.org/pp/gen"
+	"github.com/sllt/pp"
+	"github.com/sllt/pp/exp"
+	"github.com/sllt/pp/gen"
 )
 
 func DialectOptions() *pp.SQLDialectOptions {

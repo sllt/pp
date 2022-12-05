@@ -1,7 +1,7 @@
 package pp_test
 
 import (
-	"manlu.org/pp"
+	"github.com/sllt/pp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"

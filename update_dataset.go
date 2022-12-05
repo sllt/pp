@@ -1,10 +1,10 @@
 package pp
 
 import (
-	"manlu.org/pp/exec"
-	"manlu.org/pp/exp"
-	"manlu.org/pp/internal/builder"
-	"manlu.org/pp/internal/errors"
+	"github.com/sllt/pp/exec"
+	"github.com/sllt/pp/exp"
+	"github.com/sllt/pp/internal/builder"
+	"github.com/sllt/pp/internal/errors"
 )
 
 type UpdateDataset struct {
@@ -206,7 +206,7 @@ func (ud *UpdateDataset) SetError(err error) *UpdateDataset {
 // See examples.
 //
 // Errors:
-//  * There is an error generating the SQL
+//   - There is an error generating the SQL
 func (ud *UpdateDataset) Build() (sql string, params []interface{}, err error) {
 	return ud.updateSQLBuilder().Build()
 }
@@ -230,7 +230,8 @@ func (ud *UpdateDataset) ReturnsColumns() bool {
 }
 
 // Generates the UPDATE sql, and returns an exec.QueryExecutor with the sql set to the UPDATE statement
-//    db.Update("test").Set(Record{"name":"Bob", update: time.Now()}).Executor()
+//
+//	db.Update("test").Set(Record{"name":"Bob", update: time.Now()}).Executor()
 func (ud *UpdateDataset) Executor() exec.QueryExecutor {
 	return ud.queryFactory.FromSQLBuilder(ud.updateSQLBuilder())
 }

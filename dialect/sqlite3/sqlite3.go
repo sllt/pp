@@ -3,8 +3,8 @@ package sqlite3
 import (
 	"time"
 
-	"manlu.org/pp"
-	"manlu.org/pp/exp"
+	"github.com/sllt/pp"
+	"github.com/sllt/pp/exp"
 )
 
 func DialectOptions() *pp.SQLDialectOptions {

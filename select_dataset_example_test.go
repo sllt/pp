@@ -4,13 +4,13 @@ package pp_test
 import (
 	goSQL "database/sql"
 	"fmt"
-	"manlu.org/pp"
+	"github.com/sllt/pp"
 	"os"
 	"regexp"
 	"time"
 
 	"github.com/lib/pq"
-	"manlu.org/pp/exp"
+	"github.com/sllt/pp/exp"
 )
 
 const schema = `

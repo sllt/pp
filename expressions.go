@@ -1,7 +1,7 @@
 package pp
 
 import (
-	"manlu.org/pp/exp"
+	"github.com/sllt/pp/exp"
 )
 
 type (

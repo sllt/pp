@@ -1,9 +1,9 @@
 package pp
 
 import (
-	"manlu.org/pp/exp"
-	"manlu.org/pp/gen"
-	"manlu.org/pp/internal/builder"
+	"github.com/sllt/pp/exp"
+	"github.com/sllt/pp/gen"
+	"github.com/sllt/pp/internal/builder"
 	"strings"
 	"sync"
 )
@@ -22,7 +22,7 @@ type (
 	}
 	// The default adapter. This class should be used when building a new adapter. When creating a new adapter you can
 	// either override methods, or more typically update default values.
-	// See (manlu.org/pp/dialect/postgres)
+	// See (github.com/sllt/pp/dialect/postgres)
 	sqlDialect struct {
 		dialect        string
 		dialectOptions *SQLDialectOptions
