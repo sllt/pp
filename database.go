@@ -12,7 +12,7 @@ type (
 	Logger interface {
 		Printf(format string, v ...interface{})
 	}
-	// Interface for sql.DB, an interface is used so you can use with other
+	// SQLDatabase Interface for sql.DB, an interface is used so you can use with other
 	// libraries such as sqlx instead of the native sql.DB
 	SQLDatabase interface {
 		Begin() (*sql.Tx, error)

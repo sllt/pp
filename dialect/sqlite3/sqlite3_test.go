@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/glebarez/go-sqlite"
 	"github.com/sllt/pp"
 	"github.com/sllt/pp/dialect/mysql"
 	"github.com/sllt/pp/dialect/sqlite3"
@@ -63,7 +63,7 @@ type (
 )
 
 func (st *sqlite3Suite) SetupSuite() {
-	db, err := sql.Open("sqlite3", dbURI)
+	db, err := sql.Open("sqlite", dbURI)
 	if err != nil {
 		panic(err.Error())
 	}

@@ -2,7 +2,7 @@ package pp
 
 var (
 	// defaultPrepared is controlled by SetDefaultPrepared
-	defaultPrepared = true
+	defaultPrepared = false
 )
 
 type prepared int
